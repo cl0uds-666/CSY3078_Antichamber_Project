@@ -10,6 +10,8 @@ Game::Game()
     mCollectedCount = 0;
     mHasPreviousPlayerPosition = false;
 
+    mRoom2CanTrigger = true;
+
     Collectible firstCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
     // Keep this away from room filler geometry to avoid hidden pickups.
@@ -34,6 +36,8 @@ void Game::Update(Camera& camera)
     }
 
     CheckLoopingCorridor(camera);
+
+    CheckRoom2Illusion(camera);
 
     ResolveCollision(camera);
 
@@ -73,6 +77,67 @@ void Game::CheckLoopingCorridor(Camera& camera)
             mFirstCollectibleUnlocked = true;
             mCollectibles[0].isSpawned = true;
         }
+    }
+}
+
+void Game::CheckRoom2Illusion(Camera& camera)
+{
+    XMFLOAT3 playerPosition = camera.GetPosition();
+
+    XMFLOAT3 leftEntranceCentre = XMFLOAT3(-2.1f, 0.0f, 10.0f);
+    XMFLOAT3 rightEntranceCentre = XMFLOAT3(2.1f, 0.0f, 18.0f);
+    XMFLOAT3 entranceHalfSize = XMFLOAT3(0.45f, 1.0f, 0.8f);
+
+    XMFLOAT3 sharedExitACentre = XMFLOAT3(6.0f, 0.0f, 31.0f);
+    XMFLOAT3 sharedExitBCentre = XMFLOAT3(8.2f, 0.0f, 31.0f);
+    XMFLOAT3 exitHalfSize = XMFLOAT3(0.8f, 1.0f, 0.8f);
+
+    bool insideAnyTrigger =
+        IsInsideTrigger(playerPosition, leftEntranceCentre, entranceHalfSize) ||
+        IsInsideTrigger(playerPosition, rightEntranceCentre, entranceHalfSize) ||
+        IsInsideTrigger(playerPosition, sharedExitACentre, exitHalfSize) ||
+        IsInsideTrigger(playerPosition, sharedExitBCentre, exitHalfSize);
+
+    if (!mRoom2CanTrigger)
+    {
+        if (!insideAnyTrigger)
+        {
+            mRoom2CanTrigger = true;
+        }
+
+        return;
+    }
+
+    if (IsInsideTrigger(playerPosition, leftEntranceCentre, entranceHalfSize))
+    {
+        // Left corridor entrance -> shared room spawn A
+        camera.SetPosition(XMFLOAT3(6.0f, 0.0f, 27.2f));
+        mRoom2CanTrigger = false;
+        return;
+    }
+
+    if (IsInsideTrigger(playerPosition, rightEntranceCentre, entranceHalfSize))
+    {
+        // Right corridor entrance -> shared room spawn B
+        camera.SetPosition(XMFLOAT3(8.2f, 0.0f, 28.8f));
+        mRoom2CanTrigger = false;
+        return;
+    }
+
+    if (IsInsideTrigger(playerPosition, sharedExitACentre, exitHalfSize))
+    {
+        // Shared room exit A -> left corridor return point
+        camera.SetPosition(XMFLOAT3(-1.2f, 0.0f, 12.8f));
+        mRoom2CanTrigger = false;
+        return;
+    }
+
+    if (IsInsideTrigger(playerPosition, sharedExitBCentre, exitHalfSize))
+    {
+        // Shared room exit B -> right corridor return point
+        camera.SetPosition(XMFLOAT3(1.2f, 0.0f, 20.8f));
+        mRoom2CanTrigger = false;
+        return;
     }
 }
 
@@ -149,4 +214,24 @@ void Game::ResolveCollision(Camera& camera)
             return;
         }
     }
+}
+
+bool Game::IsInsideTrigger(
+    XMFLOAT3 position,
+    XMFLOAT3 centre,
+    XMFLOAT3 halfSize) const
+{
+    bool insideX =
+        position.x >= centre.x - halfSize.x &&
+        position.x <= centre.x + halfSize.x;
+
+    bool insideY =
+        position.y >= centre.y - halfSize.y &&
+        position.y <= centre.y + halfSize.y;
+
+    bool insideZ =
+        position.z >= centre.z - halfSize.z &&
+        position.z <= centre.z + halfSize.z;
+
+    return insideX && insideY && insideZ;
 }

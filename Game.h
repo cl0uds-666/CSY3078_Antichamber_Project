@@ -32,9 +32,16 @@ private:
 
     void CheckLoopingCorridor(Camera& camera);
 
+    void CheckRoom2Illusion(Camera& camera);
+
     void UpdateCollectibles(Camera& camera);
 
     void ResolveCollision(Camera& camera);
+
+    bool IsInsideTrigger(
+        XMFLOAT3 position,
+        XMFLOAT3 centre,
+        XMFLOAT3 halfSize) const;
 
 private:
 
@@ -48,4 +55,6 @@ private:
 
     XMFLOAT3 mPreviousPlayerPosition;
     bool mHasPreviousPlayerPosition;
+
+    bool mRoom2CanTrigger;
 };
