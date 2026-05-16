@@ -84,21 +84,19 @@ void Game::CheckRoom2Illusion(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
-    // Corridor entrances
-    XMFLOAT3 leftEntranceCentre = XMFLOAT3(-2.1f, 0.0f, 10.0f);
-    XMFLOAT3 rightEntranceCentre = XMFLOAT3(2.1f, 0.0f, 18.0f);
+    // Main entrance from corridor into the left room
+    XMFLOAT3 leftRoomEntranceCentre = XMFLOAT3(-2.1f, 0.0f, 10.0f);
     XMFLOAT3 entranceHalfSize = XMFLOAT3(0.45f, 1.0f, 0.8f);
 
-    // Shared interior room triggers (inside already-built right-side room network)
-    XMFLOAT3 sharedExitToLeftCentre = XMFLOAT3(6.0f, 0.0f, 23.8f);
-    XMFLOAT3 sharedExitToRightCentre = XMFLOAT3(8.2f, 0.0f, 23.8f);
-    XMFLOAT3 exitHalfSize = XMFLOAT3(0.8f, 1.0f, 0.8f);
+    // Two fake exit corridors inside the left room
+    XMFLOAT3 fakeExitACentre = XMFLOAT3(-9.0f, 0.0f, 5.2f);
+    XMFLOAT3 fakeExitBCentre = XMFLOAT3(-9.0f, 0.0f, 14.8f);
+    XMFLOAT3 exitHalfSize = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
     bool insideAnyTrigger =
-        IsInsideTrigger(playerPosition, leftEntranceCentre, entranceHalfSize) ||
-        IsInsideTrigger(playerPosition, rightEntranceCentre, entranceHalfSize) ||
-        IsInsideTrigger(playerPosition, sharedExitToLeftCentre, exitHalfSize) ||
-        IsInsideTrigger(playerPosition, sharedExitToRightCentre, exitHalfSize);
+        IsInsideTrigger(playerPosition, leftRoomEntranceCentre, entranceHalfSize) ||
+        IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize) ||
+        IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize);
 
     if (!mRoom2CanTrigger)
     {
@@ -110,35 +108,19 @@ void Game::CheckRoom2Illusion(Camera& camera)
         return;
     }
 
-    if (IsInsideTrigger(playerPosition, leftEntranceCentre, entranceHalfSize))
+    if (IsInsideTrigger(playerPosition, leftRoomEntranceCentre, entranceHalfSize))
     {
-        // Left corridor entrance -> shared room spawn A
-        // Spawn in the existing right-side room so the opposite doorway area is visible.
-        camera.SetPosition(XMFLOAT3(7.0f, 0.0f, 18.5f));
+        // Enter room normally from corridor side.
+        camera.SetPosition(XMFLOAT3(-4.6f, 0.0f, 10.0f));
         mRoom2CanTrigger = false;
         return;
     }
 
-    if (IsInsideTrigger(playerPosition, rightEntranceCentre, entranceHalfSize))
+    if (IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize) ||
+        IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize))
     {
-        // Right corridor entrance -> shared room spawn B (same room, different spawn)
-        camera.SetPosition(XMFLOAT3(7.8f, 0.0f, 18.0f));
-        mRoom2CanTrigger = false;
-        return;
-    }
-
-    if (IsInsideTrigger(playerPosition, sharedExitToLeftCentre, exitHalfSize))
-    {
-        // Shared room exit trigger -> left corridor return point
-        camera.SetPosition(XMFLOAT3(-1.3f, 0.0f, 12.0f));
-        mRoom2CanTrigger = false;
-        return;
-    }
-
-    if (IsInsideTrigger(playerPosition, sharedExitToRightCentre, exitHalfSize))
-    {
-        // Shared room exit trigger -> right corridor return point
-        camera.SetPosition(XMFLOAT3(1.3f, 0.0f, 20.0f));
+        // Any room exit sends player back to the same corridor doorway.
+        camera.SetPosition(XMFLOAT3(-1.3f, 0.0f, 10.0f));
         mRoom2CanTrigger = false;
         return;
     }

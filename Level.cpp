@@ -13,7 +13,6 @@ void Level::BuildLevel()
 
     AddLeftIllusionRoom();
 
-    AddRightIllusionRoom();
 }
 
 void Level::AddBox(XMFLOAT3 position, XMFLOAT3 scale)
@@ -82,48 +81,57 @@ void Level::AddMainCorridor()
 
 void Level::AddLeftIllusionRoom()
 {
-    // LEFT ROOM MATH:
-    // Corridor left wall is at x = -2.2
-    // Room extends left to x = -12.0
-    // Room centre x = (-2.2 + -12.0) / 2 = -7.1
-    // Room centre z = 10.0
-    //
-    // Important:
-    // The room starts EXACTLY from the corridor wall at x = -2.2.
-    // No floating gap.
-
-    float roomStartX = -2.2f;
-    float roomEndX = -12.0f;
+    // Left room attached to corridor at x = -2.2, centred near z = 10.
     float roomCentreX = -7.1f;
-
     float roomCentreZ = 10.0f;
-    float roomBackZ = 7.0f;
-    float roomFrontZ = 13.0f;
 
-    // Floor connecting directly from corridor wall into the room
+    // Main room floor
     AddBox(
         XMFLOAT3(roomCentreX, -1.0f, roomCentreZ),
         XMFLOAT3(6.2f, 0.2f, 3.8f));
 
     // Outer left wall
     AddBox(
-        XMFLOAT3(roomEndX, 0.0f, roomCentreZ),
+        XMFLOAT3(-12.0f, 0.0f, roomCentreZ),
         XMFLOAT3(0.2f, 2.0f, 3.8f));
 
-    // Back wall starts at corridor wall and runs to outer wall
+    // Back wall with central doorway gap for fake exit corridor A
     AddBox(
-        XMFLOAT3(roomCentreX, 0.0f, roomBackZ),
-        XMFLOAT3(6.2f, 2.0f, 0.2f));
+        XMFLOAT3(-7.1f, 0.0f, 7.0f),
+        XMFLOAT3(2.2f, 2.0f, 0.2f));
+    AddBox(
+        XMFLOAT3(-11.0f, 0.0f, 7.0f),
+        XMFLOAT3(1.0f, 2.0f, 0.2f));
 
-    // Front wall starts at corridor wall and runs to outer wall
+    // Front wall with central doorway gap for fake exit corridor B
     AddBox(
-        XMFLOAT3(roomCentreX, 0.0f, roomFrontZ),
-        XMFLOAT3(6.2f, 2.0f, 0.2f));
+        XMFLOAT3(-7.1f, 0.0f, 13.0f),
+        XMFLOAT3(2.2f, 2.0f, 0.2f));
+    AddBox(
+        XMFLOAT3(-11.0f, 0.0f, 13.0f),
+        XMFLOAT3(1.0f, 2.0f, 0.2f));
 
-    // Small visual block inside the room so it does not feel empty
+    // Fake mini corridor A (behind back doorway)
     AddBox(
-        XMFLOAT3(-9.5f, -0.2f, 10.0f),
-        XMFLOAT3(0.8f, 0.8f, 0.8f));
+        XMFLOAT3(-9.0f, -1.0f, 5.2f),
+        XMFLOAT3(1.6f, 0.2f, 1.6f));
+    AddBox(
+        XMFLOAT3(-10.6f, 0.0f, 5.2f),
+        XMFLOAT3(0.2f, 1.8f, 1.6f));
+    AddBox(
+        XMFLOAT3(-7.4f, 0.0f, 5.2f),
+        XMFLOAT3(0.2f, 1.8f, 1.6f));
+
+    // Fake mini corridor B (beyond front doorway)
+    AddBox(
+        XMFLOAT3(-9.0f, -1.0f, 14.8f),
+        XMFLOAT3(1.6f, 0.2f, 1.6f));
+    AddBox(
+        XMFLOAT3(-10.6f, 0.0f, 14.8f),
+        XMFLOAT3(0.2f, 1.8f, 1.6f));
+    AddBox(
+        XMFLOAT3(-7.4f, 0.0f, 14.8f),
+        XMFLOAT3(0.2f, 1.8f, 1.6f));
 }
 
 void Level::AddRightIllusionRoom()
