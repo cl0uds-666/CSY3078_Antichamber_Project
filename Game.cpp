@@ -84,17 +84,13 @@ void Game::CheckRoom2Illusion(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
-    // Main entrance from corridor into the left room
-    XMFLOAT3 leftRoomEntranceCentre = XMFLOAT3(-2.1f, 0.0f, 10.0f);
-    XMFLOAT3 entranceHalfSize = XMFLOAT3(0.45f, 1.0f, 0.8f);
-
-    // Two fake exit corridors inside the left room
+    // Two fake exit corridors inside the left room.
+    // Entering the room from corridor is fully normal (no entrance teleport).
     XMFLOAT3 fakeExitACentre = XMFLOAT3(-9.0f, 0.0f, 5.2f);
     XMFLOAT3 fakeExitBCentre = XMFLOAT3(-9.0f, 0.0f, 14.8f);
     XMFLOAT3 exitHalfSize = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
     bool insideAnyTrigger =
-        IsInsideTrigger(playerPosition, leftRoomEntranceCentre, entranceHalfSize) ||
         IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize) ||
         IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize);
 
@@ -108,18 +104,11 @@ void Game::CheckRoom2Illusion(Camera& camera)
         return;
     }
 
-    if (IsInsideTrigger(playerPosition, leftRoomEntranceCentre, entranceHalfSize))
-    {
-        // Enter room normally from corridor side.
-        camera.SetPosition(XMFLOAT3(-4.6f, 0.0f, 10.0f));
-        mRoom2CanTrigger = false;
-        return;
-    }
-
     if (IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize) ||
         IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize))
     {
         // Any room exit sends player back to the same corridor doorway.
+        // Spawn just outside the left doorway, facing direction remains camera-controlled.
         camera.SetPosition(XMFLOAT3(-1.3f, 0.0f, 10.0f));
         mRoom2CanTrigger = false;
         return;

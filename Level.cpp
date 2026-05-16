@@ -13,6 +13,7 @@ void Level::BuildLevel()
 
     AddLeftIllusionRoom();
 
+    AddRightIllusionRoom();
 }
 
 void Level::AddBox(XMFLOAT3 position, XMFLOAT3 scale)
