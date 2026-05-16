@@ -13,7 +13,7 @@ Game::Game()
     Collectible firstCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
     // Keep this away from room filler geometry to avoid hidden pickups.
-    firstCollectible.position = XMFLOAT3(0.0f, -0.2f, 8.0f);
+    firstCollectible.position = XMFLOAT3(0.0f, -0.2f, 19.0f);
     firstCollectible.isSpawned = false;
     firstCollectible.isCollected = false;
 
