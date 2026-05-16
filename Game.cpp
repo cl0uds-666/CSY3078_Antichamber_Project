@@ -107,8 +107,8 @@ void Game::CheckRoom2Illusion(Camera& camera)
     if (IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize))
     {
         // Back-side fake exit: return to corridor and turn right (90 deg).
-        camera.SetPosition(XMFLOAT3(-0.8f, 0.0f, 10.0f));
-        camera.AddYaw(XM_PIDIV2);
+        camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
+        camera.AddYaw(-XM_PIDIV2);
         mRoom2CanTrigger = false;
         return;
     }
@@ -116,8 +116,8 @@ void Game::CheckRoom2Illusion(Camera& camera)
     if (IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize))
     {
         // Front-side fake exit: return to corridor and turn left (-90 deg).
-        camera.SetPosition(XMFLOAT3(-0.8f, 0.0f, 10.0f));
-        camera.AddYaw(-XM_PIDIV2);
+        camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
+        camera.AddYaw(XM_PIDIV2);
         mRoom2CanTrigger = false;
         return;
     }
