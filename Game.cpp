@@ -86,9 +86,9 @@ void Game::CheckRoom2Illusion(Camera& camera)
 
     // Two fake exit corridors inside the left room.
     // Entering the room from corridor is fully normal (no entrance teleport).
-    XMFLOAT3 fakeExitACentre = XMFLOAT3(-9.0f, 0.0f, 5.2f);
-    XMFLOAT3 fakeExitBCentre = XMFLOAT3(-9.0f, 0.0f, 14.8f);
-    XMFLOAT3 exitHalfSize = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    XMFLOAT3 fakeExitACentre = XMFLOAT3(-9.0f, 0.0f, 6.0f);
+    XMFLOAT3 fakeExitBCentre = XMFLOAT3(-9.0f, 0.0f, 14.0f);
+    XMFLOAT3 exitHalfSize = XMFLOAT3(1.2f, 1.0f, 1.2f);
 
     bool insideAnyTrigger =
         IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize) ||

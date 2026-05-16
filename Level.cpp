@@ -82,11 +82,11 @@ void Level::AddMainCorridor()
 
 void Level::AddLeftIllusionRoom()
 {
-    // Left room attached to corridor at x = -2.2, centred near z = 10.
+    // Left room attached directly to corridor wall at x = -2.2
     float roomCentreX = -7.1f;
     float roomCentreZ = 10.0f;
 
-    // Main room floor
+    // Main room floor (touches corridor doorway side)
     AddBox(
         XMFLOAT3(roomCentreX, -1.0f, roomCentreZ),
         XMFLOAT3(6.2f, 0.2f, 3.8f));
@@ -96,43 +96,43 @@ void Level::AddLeftIllusionRoom()
         XMFLOAT3(-12.0f, 0.0f, roomCentreZ),
         XMFLOAT3(0.2f, 2.0f, 3.8f));
 
-    // Back wall with central doorway gap for fake exit corridor A
+    // Back wall with a centred doorway (fake exit A)
     AddBox(
-        XMFLOAT3(-7.1f, 0.0f, 7.0f),
-        XMFLOAT3(2.2f, 2.0f, 0.2f));
+        XMFLOAT3(-4.9f, 0.0f, 7.0f),
+        XMFLOAT3(2.7f, 2.0f, 0.2f));
     AddBox(
-        XMFLOAT3(-11.0f, 0.0f, 7.0f),
+        XMFLOAT3(-11.2f, 0.0f, 7.0f),
         XMFLOAT3(1.0f, 2.0f, 0.2f));
 
-    // Front wall with central doorway gap for fake exit corridor B
+    // Front wall with a centred doorway (fake exit B)
     AddBox(
-        XMFLOAT3(-7.1f, 0.0f, 13.0f),
-        XMFLOAT3(2.2f, 2.0f, 0.2f));
+        XMFLOAT3(-4.9f, 0.0f, 13.0f),
+        XMFLOAT3(2.7f, 2.0f, 0.2f));
     AddBox(
-        XMFLOAT3(-11.0f, 0.0f, 13.0f),
+        XMFLOAT3(-11.2f, 0.0f, 13.0f),
         XMFLOAT3(1.0f, 2.0f, 0.2f));
 
     // Fake mini corridor A (behind back doorway)
     AddBox(
-        XMFLOAT3(-9.0f, -1.0f, 5.2f),
-        XMFLOAT3(1.6f, 0.2f, 1.6f));
+        XMFLOAT3(-9.0f, -1.0f, 5.4f),
+        XMFLOAT3(1.5f, 0.2f, 1.4f));
     AddBox(
-        XMFLOAT3(-10.6f, 0.0f, 5.2f),
-        XMFLOAT3(0.2f, 1.8f, 1.6f));
+        XMFLOAT3(-10.5f, 0.0f, 5.4f),
+        XMFLOAT3(0.2f, 1.8f, 1.4f));
     AddBox(
-        XMFLOAT3(-7.4f, 0.0f, 5.2f),
-        XMFLOAT3(0.2f, 1.8f, 1.6f));
+        XMFLOAT3(-7.5f, 0.0f, 5.4f),
+        XMFLOAT3(0.2f, 1.8f, 1.4f));
 
     // Fake mini corridor B (beyond front doorway)
     AddBox(
-        XMFLOAT3(-9.0f, -1.0f, 14.8f),
-        XMFLOAT3(1.6f, 0.2f, 1.6f));
+        XMFLOAT3(-9.0f, -1.0f, 14.6f),
+        XMFLOAT3(1.5f, 0.2f, 1.4f));
     AddBox(
-        XMFLOAT3(-10.6f, 0.0f, 14.8f),
-        XMFLOAT3(0.2f, 1.8f, 1.6f));
+        XMFLOAT3(-10.5f, 0.0f, 14.6f),
+        XMFLOAT3(0.2f, 1.8f, 1.4f));
     AddBox(
-        XMFLOAT3(-7.4f, 0.0f, 14.8f),
-        XMFLOAT3(0.2f, 1.8f, 1.6f));
+        XMFLOAT3(-7.5f, 0.0f, 14.6f),
+        XMFLOAT3(0.2f, 1.8f, 1.4f));
 }
 
 void Level::AddRightIllusionRoom()
