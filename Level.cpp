@@ -98,16 +98,16 @@ void Level::AddLeftIllusionRoom()
 
     // Back wall with a centred doorway (fake exit A)
     AddBox(
-        XMFLOAT3(-4.9f, 0.0f, 7.0f),
-        XMFLOAT3(2.7f, 2.0f, 0.2f));
+        XMFLOAT3(-4.7f, 0.0f, 7.0f),
+        XMFLOAT3(2.9f, 2.0f, 0.2f));
     AddBox(
         XMFLOAT3(-11.2f, 0.0f, 7.0f),
         XMFLOAT3(1.0f, 2.0f, 0.2f));
 
     // Front wall with a centred doorway (fake exit B)
     AddBox(
-        XMFLOAT3(-4.9f, 0.0f, 13.0f),
-        XMFLOAT3(2.7f, 2.0f, 0.2f));
+        XMFLOAT3(-4.7f, 0.0f, 13.0f),
+        XMFLOAT3(2.9f, 2.0f, 0.2f));
     AddBox(
         XMFLOAT3(-11.2f, 0.0f, 13.0f),
         XMFLOAT3(1.0f, 2.0f, 0.2f));

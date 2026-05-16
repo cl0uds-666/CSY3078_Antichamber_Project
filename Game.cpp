@@ -104,12 +104,20 @@ void Game::CheckRoom2Illusion(Camera& camera)
         return;
     }
 
-    if (IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize) ||
-        IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize))
+    if (IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize))
     {
-        // Any room exit sends player back to the same corridor doorway.
-        // Spawn just outside the left doorway, facing direction remains camera-controlled.
-        camera.SetPosition(XMFLOAT3(-1.3f, 0.0f, 10.0f));
+        // Back-side fake exit: return to corridor and turn right (90 deg).
+        camera.SetPosition(XMFLOAT3(-0.8f, 0.0f, 10.0f));
+        camera.AddYaw(XM_PIDIV2);
+        mRoom2CanTrigger = false;
+        return;
+    }
+
+    if (IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize))
+    {
+        // Front-side fake exit: return to corridor and turn left (-90 deg).
+        camera.SetPosition(XMFLOAT3(-0.8f, 0.0f, 10.0f));
+        camera.AddYaw(-XM_PIDIV2);
         mRoom2CanTrigger = false;
         return;
     }

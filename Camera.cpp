@@ -83,3 +83,14 @@ void Camera::SetPosition(XMFLOAT3 position)
     mTarget.y = mPosition.y;
     mTarget.z = mPosition.z + forwardZ;
 }
+void Camera::AddYaw(float deltaYaw)
+{
+    mYaw += deltaYaw;
+
+    float forwardX = sinf(mYaw);
+    float forwardZ = cosf(mYaw);
+
+    mTarget.x = mPosition.x + forwardX;
+    mTarget.y = mPosition.y;
+    mTarget.z = mPosition.z + forwardZ;
+}
