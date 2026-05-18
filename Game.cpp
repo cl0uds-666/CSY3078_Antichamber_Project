@@ -236,20 +236,20 @@ void Game::CheckRoom3Illusion(Camera& camera)
         if (mRoom3State == Room3State::Normal)
         {
             mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.8f;
-            shiftedPosition.z = 21.0f;
+            shiftedPosition.x = 8.6f;
+            shiftedPosition.z = 19.3f;
         }
         else if (mRoom3State == Room3State::ShiftedA)
         {
             mRoom3State = Room3State::ShiftedB;
-            shiftedPosition.x = 5.6f;
-            shiftedPosition.z = 23.5f;
+            shiftedPosition.x = 5.8f;
+            shiftedPosition.z = 18.4f;
         }
         else
         {
             mRoom3State = Room3State::Normal;
             shiftedPosition.x = 7.1f;
-            shiftedPosition.z = 22.0f;
+            shiftedPosition.z = 18.7f;
         }
     }
     else if (insideConnector)
@@ -258,21 +258,21 @@ void Game::CheckRoom3Illusion(Camera& camera)
         if (mRoom3State == Room3State::ShiftedA)
         {
             mRoom3State = Room3State::ShiftedB;
-            shiftedPosition.x = 5.8f;
-            shiftedPosition.z = 25.5f;
+            shiftedPosition.x = 6.0f;
+            shiftedPosition.z = 17.5f;
         }
         else if (mRoom3State == Room3State::ShiftedB)
         {
             mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.4f;
-            shiftedPosition.z = 23.8f;
+            shiftedPosition.x = 8.3f;
+            shiftedPosition.z = 18.0f;
         }
         else
         {
             // First connector hit from normal state nudges into ShiftedA.
             mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.2f;
-            shiftedPosition.z = 24.2f;
+            shiftedPosition.x = 8.0f;
+            shiftedPosition.z = 17.2f;
         }
     }
 
