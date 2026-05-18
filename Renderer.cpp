@@ -34,6 +34,11 @@ bool Renderer::Initialise(HWND hwnd)
         return false;
     }
 
+    if (!CreateHudDepthStencilState())
+    {
+        return false;
+    }
+
     if (!CreateShaders())
     {
         return false;
@@ -188,6 +193,28 @@ bool Renderer::CreateRasterizerState()
     }
 
     mDeviceContext->RSSetState(mRasterizerState.Get());
+
+    return true;
+}
+
+
+bool Renderer::CreateHudDepthStencilState()
+{
+    D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
+
+    depthStencilDesc.DepthEnable = FALSE;
+    depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+    depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+    depthStencilDesc.StencilEnable = FALSE;
+
+    HRESULT hr = mDevice->CreateDepthStencilState(
+        &depthStencilDesc,
+        mHudDepthStencilState.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        return false;
+    }
 
     return true;
 }
@@ -501,6 +528,112 @@ void Renderer::DrawCube(
 
 
 
+void Renderer::DrawHudSegment(
+    float x,
+    float y,
+    float scaleX,
+    float scaleY,
+    float rotation,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    XMMATRIX world =
+        XMMatrixScaling(scaleX, scaleY, 0.04f) *
+        XMMatrixRotationZ(rotation) *
+        XMMatrixTranslation(x, y, 1.0f);
+
+    DrawCube(world, view, projection);
+}
+
+void Renderer::DrawHudDigit(
+    int digit,
+    float x,
+    float y,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    bool segments[10][7] =
+    {
+        { true,  true,  true,  true,  true,  true,  false },
+        { false, true,  true,  false, false, false, false },
+        { true,  true,  false, true,  true,  false, true  },
+        { true,  true,  true,  true,  false, false, true  },
+        { false, true,  true,  false, false, true,  true  },
+        { true,  false, true,  true,  false, true,  true  },
+        { true,  false, true,  true,  true,  true,  true  },
+        { true,  true,  true,  false, false, false, false },
+        { true,  true,  true,  true,  true,  true,  true  },
+        { true,  true,  true,  true,  false, true,  true  }
+    };
+
+    if (digit < 0 || digit > 9)
+    {
+        return;
+    }
+
+    float horizontalScaleX = 18.0f;
+    float horizontalScaleY = 3.0f;
+    float verticalScaleX = 3.0f;
+    float verticalScaleY = 13.0f;
+
+    if (segments[digit][0])
+    {
+        DrawHudSegment(x, y + 22.0f, horizontalScaleX, horizontalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][1])
+    {
+        DrawHudSegment(x + 18.0f, y + 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][2])
+    {
+        DrawHudSegment(x + 18.0f, y - 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][3])
+    {
+        DrawHudSegment(x, y - 22.0f, horizontalScaleX, horizontalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][4])
+    {
+        DrawHudSegment(x - 18.0f, y - 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][5])
+    {
+        DrawHudSegment(x - 18.0f, y + 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][6])
+    {
+        DrawHudSegment(x, y, horizontalScaleX, horizontalScaleY, 0.0f, view, projection);
+    }
+}
+
+void Renderer::DrawHudCounter()
+{
+    int collectedCount = mGame.GetCollectedCount();
+    int totalCollectibles = static_cast<int>(mGame.GetCollectibles().size());
+
+    XMMATRIX hudView = XMMatrixIdentity();
+    XMMATRIX hudProjection = XMMatrixOrthographicLH(
+        1280.0f,
+        720.0f,
+        0.0f,
+        10.0f);
+
+    mDeviceContext->OMSetDepthStencilState(mHudDepthStencilState.Get(), 0);
+
+    // Top-left HUD counter: collected / total.
+    DrawHudDigit(collectedCount, -575.0f, 315.0f, hudView, hudProjection);
+    DrawHudSegment(-535.0f, 315.0f, 3.0f, 22.0f, -0.45f, hudView, hudProjection);
+    DrawHudDigit(totalCollectibles, -495.0f, 315.0f, hudView, hudProjection);
+
+    mDeviceContext->OMSetDepthStencilState(nullptr, 0);
+}
+
 void Renderer::RenderFrame()
 {
     float colour[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -601,6 +734,8 @@ void Renderer::RenderFrame()
 
         DrawCube(objectWorld, view, projection);
     }
+
+    DrawHudCounter();
 
     mSwapChain->Present(1, 0);
 }
