@@ -17,6 +17,8 @@ public:
 
     XMFLOAT3 GetPosition() const;
 
+    XMFLOAT3 GetForwardDirection() const;
+
     void SetPosition(XMFLOAT3 position);
 
     void AddYaw(float deltaYaw);

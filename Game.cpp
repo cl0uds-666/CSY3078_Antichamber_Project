@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <Windows.h>
+#include <cmath>
 #include <sstream>
 
 namespace
@@ -38,6 +39,8 @@ Game::Game()
     mRoom2CanTrigger = true;
     mRoom3State = Room3State::Normal;
     mRoom3CanTrigger = true;
+    mRoom3LookAwayFrameCount = 0;
+    mRoom3LookAwayCooldownFrames = 0;
     ApplyRoom3Layout(mRoom3State);
 
     Collectible firstCollectible;
@@ -66,7 +69,7 @@ void Game::Update(Camera& camera)
     CheckLoopingCorridor(camera);
 
     CheckRoom2Illusion(camera);
-    CheckRoom3Illusion(camera);
+    CheckRoom3LookAwayToggle(camera);
 
     ResolveCollision(camera);
 
@@ -166,134 +169,128 @@ void Game::CheckRoom2Illusion(Camera& camera)
 
 void Game::CheckRoom3Illusion(Camera& camera)
 {
+    CheckRoom3LookAwayToggle(camera);
+}
+
+void Game::CheckRoom3LookAwayToggle(Camera& camera)
+{
     XMFLOAT3 playerPosition = camera.GetPosition();
-    Room3State previousState = mRoom3State;
 
-    // Tuned to observed playable right-room area from debug traces:
-    // approximately x in [5.5, 10.8], z in [15.5, 20.0].
-    // We allow transitions in:
-    //  - a central room zone
-    //  - a connector/front zone near room entrance.
-    XMFLOAT3 rightRoomCentreTrigger = XMFLOAT3(7.1f, 0.0f, 18.7f);
-    XMFLOAT3 rightRoomCentreHalfSize = XMFLOAT3(1.8f, 1.0f, 1.2f);
+    XMFLOAT3 activeZoneCentre = XMFLOAT3(7.1f, 0.0f, 18.0f);
+    XMFLOAT3 activeZoneHalfSize = XMFLOAT3(3.0f, 1.0f, 3.0f);
 
-    XMFLOAT3 connectorTrigger = XMFLOAT3(7.1f, 0.0f, 16.6f);
-    XMFLOAT3 connectorHalfSize = XMFLOAT3(1.6f, 1.0f, 1.0f);
+    bool insideActiveZone = IsInsideTrigger(
+        playerPosition,
+        activeZoneCentre,
+        activeZoneHalfSize);
 
-    bool insideCentre =
-        IsInsideTrigger(playerPosition, rightRoomCentreTrigger, rightRoomCentreHalfSize);
-    bool insideConnector =
-        IsInsideTrigger(playerPosition, connectorTrigger, connectorHalfSize);
-
-    bool insideAnyTrigger = insideCentre || insideConnector;
-    static bool wasInsideAnyTrigger = false;
-    static int debugFrameCounter = 0;
-
-    debugFrameCounter++;
-    if (debugFrameCounter >= 120)
+    if (!insideActiveZone)
     {
-        std::ostringstream stream;
-        stream
-            << "[Room3 Debug] Pos("
-            << playerPosition.x << ", "
-            << playerPosition.y << ", "
-            << playerPosition.z << ") "
-            << "State=" << ToRoom3StateString(mRoom3State) << " "
-            << "CanTrigger=" << (mRoom3CanTrigger ? "true" : "false") << " "
-            << "InsideCentre=" << (insideCentre ? "true" : "false") << " "
-            << "InsideConnector=" << (insideConnector ? "true" : "false")
-            << "\n";
-        Room3DebugLog(stream.str());
-        debugFrameCounter = 0;
+        mRoom3CanTrigger = true;
+        mRoom3LookAwayFrameCount = 0;
+        mRoom3LookAwayCooldownFrames = 0;
+        return;
     }
 
-    if (insideAnyTrigger != wasInsideAnyTrigger)
+    XMFLOAT3 forwardDirection = camera.GetForwardDirection();
+
+    XMFLOAT3 layoutAnchors[3] =
     {
-        std::ostringstream stream;
-        stream
-            << "[Room3 Debug] Trigger boundary crossed. "
-            << "insideAnyTrigger=" << (insideAnyTrigger ? "true" : "false") << " "
-            << "Pos(" << playerPosition.x << ", "
-            << playerPosition.y << ", "
-            << playerPosition.z << ")\n";
-        Room3DebugLog(stream.str());
-        wasInsideAnyTrigger = insideAnyTrigger;
+        XMFLOAT3(2.2f, 0.0f, 19.0f),
+        XMFLOAT3(7.1f, 0.0f, 15.0f),
+        XMFLOAT3(7.1f, 0.0f, 21.0f)
+    };
+
+    float bestAnchorDot = -1.0f;
+
+    for (int i = 0; i < 3; i++)
+    {
+        float anchorX = layoutAnchors[i].x - playerPosition.x;
+        float anchorZ = layoutAnchors[i].z - playerPosition.z;
+        float anchorLength = sqrtf(anchorX * anchorX + anchorZ * anchorZ);
+
+        if (anchorLength <= 0.001f)
+        {
+            continue;
+        }
+
+        float anchorDirectionX = anchorX / anchorLength;
+        float anchorDirectionZ = anchorZ / anchorLength;
+        float anchorDot =
+            forwardDirection.x * anchorDirectionX +
+            forwardDirection.z * anchorDirectionZ;
+
+        if (anchorDot > bestAnchorDot)
+        {
+            bestAnchorDot = anchorDot;
+        }
+    }
+
+    // Dot below this value means the player is at least about 80 degrees away
+    // from every key doorway anchor, so the door is safely out of view.
+    float lookAwayDotThreshold = 0.17f;
+    int requiredLookAwayFrames = 24;
+    int cooldownFrames = 45;
+
+    bool isLookingAway = bestAnchorDot < lookAwayDotThreshold;
+
+    if (mRoom3LookAwayCooldownFrames > 0)
+    {
+        mRoom3LookAwayCooldownFrames--;
+        mRoom3LookAwayFrameCount = 0;
+        return;
     }
 
     if (!mRoom3CanTrigger)
     {
-        if (!insideAnyTrigger)
+        if (!isLookingAway)
         {
             mRoom3CanTrigger = true;
         }
 
+        mRoom3LookAwayFrameCount = 0;
         return;
     }
 
-    if (!insideAnyTrigger)
+    if (!isLookingAway)
+    {
+        mRoom3LookAwayFrameCount = 0;
+        return;
+    }
+
+    mRoom3LookAwayFrameCount++;
+
+    if (mRoom3LookAwayFrameCount < requiredLookAwayFrames)
     {
         return;
     }
 
-    XMFLOAT3 shiftedPosition = playerPosition;
+    Room3State previousState = mRoom3State;
 
-    if (insideCentre)
+    if (mRoom3State == Room3State::Normal)
     {
-        if (mRoom3State == Room3State::Normal)
-        {
-            mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.6f;
-            shiftedPosition.z = 19.3f;
-        }
-        else if (mRoom3State == Room3State::ShiftedA)
-        {
-            mRoom3State = Room3State::ShiftedB;
-            shiftedPosition.x = 5.8f;
-            shiftedPosition.z = 18.4f;
-        }
-        else
-        {
-            mRoom3State = Room3State::Normal;
-            shiftedPosition.x = 7.1f;
-            shiftedPosition.z = 18.7f;
-        }
+        mRoom3State = Room3State::ShiftedA;
     }
-    else if (insideConnector)
+    else if (mRoom3State == Room3State::ShiftedA)
     {
-        // Connector zone swaps between shifted layouts.
-        if (mRoom3State == Room3State::ShiftedA)
-        {
-            mRoom3State = Room3State::ShiftedB;
-            shiftedPosition.x = 6.0f;
-            shiftedPosition.z = 17.5f;
-        }
-        else if (mRoom3State == Room3State::ShiftedB)
-        {
-            mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.3f;
-            shiftedPosition.z = 18.0f;
-        }
-        else
-        {
-            // First connector hit from normal state nudges into ShiftedA.
-            mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.0f;
-            shiftedPosition.z = 17.2f;
-        }
+        mRoom3State = Room3State::ShiftedB;
+    }
+    else
+    {
+        mRoom3State = Room3State::Normal;
     }
 
-    camera.SetPosition(shiftedPosition);
     mRoom3CanTrigger = false;
+    mRoom3LookAwayFrameCount = 0;
+    mRoom3LookAwayCooldownFrames = cooldownFrames;
     ApplyRoom3Layout(mRoom3State);
 
     std::ostringstream stream;
     stream
-        << "[Room3 Debug] Transition fired. "
+        << "[Room3 Debug] Look-away transition fired. "
         << ToRoom3StateString(previousState) << " -> "
         << ToRoom3StateString(mRoom3State) << " "
-        << "NewPos(" << shiftedPosition.x << ", "
-        << shiftedPosition.y << ", "
-        << shiftedPosition.z << ")\n";
+        << "BestAnchorDot=" << bestAnchorDot << "\n";
     Room3DebugLog(stream.str());
 }
 

@@ -43,6 +43,7 @@ private:
     void CheckRoom2Illusion(Camera& camera);
 
     void CheckRoom3Illusion(Camera& camera);
+    void CheckRoom3LookAwayToggle(Camera& camera);
     void ApplyRoom3Layout(Room3State state);
 
     void UpdateCollectibles(Camera& camera);
@@ -71,6 +72,8 @@ private:
 
     Room3State mRoom3State;
     bool mRoom3CanTrigger;
+    int mRoom3LookAwayFrameCount;
+    int mRoom3LookAwayCooldownFrames;
 
     std::vector<SceneObject> mRoom3LayoutProps;
 };
