@@ -1,4 +1,23 @@
 #include "Game.h"
+#include <iostream>
+
+namespace
+{
+const char* ToRoom3StateString(Room3State state)
+{
+    if (state == Room3State::Normal)
+    {
+        return "Normal";
+    }
+
+    if (state == Room3State::ShiftedA)
+    {
+        return "ShiftedA";
+    }
+
+    return "ShiftedB";
+}
+}
 
 Game::Game()
 {
@@ -136,6 +155,7 @@ void Game::CheckRoom2Illusion(Camera& camera)
 void Game::CheckRoom3Illusion(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
+    Room3State previousState = mRoom3State;
 
     // Right room bounds are around x ~= 7.1 and z ~= 18-28.
     // We allow transitions only in a central zone and a connector zone.
@@ -151,6 +171,36 @@ void Game::CheckRoom3Illusion(Camera& camera)
         IsInsideTrigger(playerPosition, connectorTrigger, connectorHalfSize);
 
     bool insideAnyTrigger = insideCentre || insideConnector;
+    static bool wasInsideAnyTrigger = false;
+    static int debugFrameCounter = 0;
+
+    debugFrameCounter++;
+    if (debugFrameCounter >= 120)
+    {
+        std::cout
+            << "[Room3 Debug] Pos("
+            << playerPosition.x << ", "
+            << playerPosition.y << ", "
+            << playerPosition.z << ") "
+            << "State=" << ToRoom3StateString(mRoom3State) << " "
+            << "CanTrigger=" << (mRoom3CanTrigger ? "true" : "false") << " "
+            << "InsideCentre=" << (insideCentre ? "true" : "false") << " "
+            << "InsideConnector=" << (insideConnector ? "true" : "false")
+            << std::endl;
+        debugFrameCounter = 0;
+    }
+
+    if (insideAnyTrigger != wasInsideAnyTrigger)
+    {
+        std::cout
+            << "[Room3 Debug] Trigger boundary crossed. "
+            << "insideAnyTrigger=" << (insideAnyTrigger ? "true" : "false") << " "
+            << "Pos(" << playerPosition.x << ", "
+            << playerPosition.y << ", "
+            << playerPosition.z << ")"
+            << std::endl;
+        wasInsideAnyTrigger = insideAnyTrigger;
+    }
 
     if (!mRoom3CanTrigger)
     {
@@ -216,6 +266,15 @@ void Game::CheckRoom3Illusion(Camera& camera)
 
     camera.SetPosition(shiftedPosition);
     mRoom3CanTrigger = false;
+
+    std::cout
+        << "[Room3 Debug] Transition fired. "
+        << ToRoom3StateString(previousState) << " -> "
+        << ToRoom3StateString(mRoom3State) << " "
+        << "NewPos(" << shiftedPosition.x << ", "
+        << shiftedPosition.y << ", "
+        << shiftedPosition.z << ")"
+        << std::endl;
 }
 
 void Game::UpdateCollectibles(Camera& camera)
