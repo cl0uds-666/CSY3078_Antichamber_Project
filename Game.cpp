@@ -301,63 +301,72 @@ void Game::ApplyRoom3Layout(Room3State state)
 {
     mRoom3LayoutProps.clear();
 
-    // Two doorway lanes in validated right-room playable bounds.
-    // Doorway A = left lane, Doorway B = right lane.
-    XMFLOAT3 doorwayA = XMFLOAT3(5.9f, 0.0f, 18.6f);
-    XMFLOAT3 doorwayB = XMFLOAT3(8.9f, 0.0f, 18.6f);
+    // Room 3 now treats the corridor-room entrance as the door that melts
+    // and re-forms on different walls. The static level leaves real doorway
+    // gaps in each candidate wall; these dynamic slabs seal every inactive
+    // doorway, so the active state is an actual opening rather than a block
+    // stuck on top of a wall.
+    XMFLOAT3 originalCorridorDoor = XMFLOAT3(2.2f, 0.0f, 19.0f);
+    XMFLOAT3 backWallDoor = XMFLOAT3(7.1f, 0.0f, 15.0f);
+    XMFLOAT3 frontWallDoor = XMFLOAT3(7.1f, 0.0f, 21.0f);
 
     SceneObject centralPillar;
     centralPillar.position = XMFLOAT3(7.1f, 0.0f, 18.2f);
     centralPillar.scale = XMFLOAT3(0.45f, 1.8f, 0.45f);
     mRoom3LayoutProps.push_back(centralPillar);
 
-    SceneObject doorwayBlocker;
-    doorwayBlocker.scale = XMFLOAT3(0.55f, 1.4f, 0.55f);
-
     SceneObject sideBlock;
     sideBlock.scale = XMFLOAT3(0.9f, 1.0f, 0.4f);
 
-    // Visual doorway "wall cap" to make the active doorway appear to move.
-    // This is a tall thin panel that closes one lane while the other remains open.
-    SceneObject doorwayWallCap;
-    doorwayWallCap.scale = XMFLOAT3(0.35f, 1.8f, 0.25f);
+    SceneObject corridorDoorSlab;
+    corridorDoorSlab.position = originalCorridorDoor;
+    corridorDoorSlab.scale = XMFLOAT3(0.2f, 2.0f, 2.0f);
 
-    // Big visual "moving door wall" panel so the doorway appears to move
-    // between different room walls (front/back), not just side-to-side.
-    SceneObject movingDoorWall;
-    movingDoorWall.scale = XMFLOAT3(1.3f, 1.9f, 0.2f);
+    SceneObject backDoorSlab;
+    backDoorSlab.position = backWallDoor;
+    backDoorSlab.scale = XMFLOAT3(1.2f, 2.0f, 0.2f);
+
+    SceneObject frontDoorSlab;
+    frontDoorSlab.position = frontWallDoor;
+    frontDoorSlab.scale = XMFLOAT3(1.2f, 2.0f, 0.2f);
+
+    // A shallow floor-level puddle marks the doorway that has just melted.
+    // It sits below the player collision bounds, so it is purely visual.
+    SceneObject meltedDoorPuddle;
+    meltedDoorPuddle.scale = XMFLOAT3(1.0f, 0.05f, 0.55f);
 
     if (state == Room3State::Normal)
     {
-        // Neutral baseline: centre blocker, both doorway lanes still readable.
-        doorwayBlocker.position = XMFLOAT3(7.1f, 0.0f, 16.9f);
+        // Original layout: the corridor-to-room entrance remains exactly
+        // where the player first found it, with the other wall doors sealed.
         sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
-        doorwayWallCap.position = XMFLOAT3(7.1f, 0.0f, 18.6f);
-        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 20.8f);
+        meltedDoorPuddle.position = XMFLOAT3(2.55f, -0.9f, 19.0f);
+
+        mRoom3LayoutProps.push_back(backDoorSlab);
+        mRoom3LayoutProps.push_back(frontDoorSlab);
     }
     else if (state == Room3State::ShiftedA)
     {
-        // ShiftedA: block doorway B, keep doorway A open.
-        doorwayBlocker.position = doorwayB;
+        // ShiftedA: the original corridor doorway has re-formed as a real
+        // opening on the front wall, so the corridor and back wall are closed.
         sideBlock.position = XMFLOAT3(6.2f, 0.0f, 17.4f);
-        doorwayWallCap.position = doorwayB;
-        // Door looks moved to the front wall in this state.
-        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 20.8f);
+        meltedDoorPuddle.position = XMFLOAT3(7.1f, -0.9f, 20.65f);
+
+        mRoom3LayoutProps.push_back(corridorDoorSlab);
+        mRoom3LayoutProps.push_back(backDoorSlab);
     }
     else
     {
-        // ShiftedB: block doorway A, keep doorway B open.
-        doorwayBlocker.position = doorwayA;
+        // ShiftedB: the same door has melted into the back wall instead.
         sideBlock.position = XMFLOAT3(8.6f, 0.0f, 17.4f);
-        doorwayWallCap.position = doorwayA;
-        // Door looks moved to the back wall in this state.
-        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 15.2f);
+        meltedDoorPuddle.position = XMFLOAT3(7.1f, -0.9f, 15.35f);
+
+        mRoom3LayoutProps.push_back(corridorDoorSlab);
+        mRoom3LayoutProps.push_back(frontDoorSlab);
     }
 
-    mRoom3LayoutProps.push_back(doorwayBlocker);
     mRoom3LayoutProps.push_back(sideBlock);
-    mRoom3LayoutProps.push_back(doorwayWallCap);
-    mRoom3LayoutProps.push_back(movingDoorWall);
+    mRoom3LayoutProps.push_back(meltedDoorPuddle);
 }
 
 void Game::UpdateCollectibles(Camera& camera)
