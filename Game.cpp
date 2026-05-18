@@ -322,12 +322,18 @@ void Game::ApplyRoom3Layout(Room3State state)
     SceneObject doorwayWallCap;
     doorwayWallCap.scale = XMFLOAT3(0.35f, 1.8f, 0.25f);
 
+    // Big visual "moving door wall" panel so the doorway appears to move
+    // between different room walls (front/back), not just side-to-side.
+    SceneObject movingDoorWall;
+    movingDoorWall.scale = XMFLOAT3(1.3f, 1.9f, 0.2f);
+
     if (state == Room3State::Normal)
     {
         // Neutral baseline: centre blocker, both doorway lanes still readable.
         doorwayBlocker.position = XMFLOAT3(7.1f, 0.0f, 16.9f);
         sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
         doorwayWallCap.position = XMFLOAT3(7.1f, 0.0f, 18.6f);
+        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 20.8f);
     }
     else if (state == Room3State::ShiftedA)
     {
@@ -335,6 +341,8 @@ void Game::ApplyRoom3Layout(Room3State state)
         doorwayBlocker.position = doorwayB;
         sideBlock.position = XMFLOAT3(6.2f, 0.0f, 17.4f);
         doorwayWallCap.position = doorwayB;
+        // Door looks moved to the front wall in this state.
+        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 20.8f);
     }
     else
     {
@@ -342,11 +350,14 @@ void Game::ApplyRoom3Layout(Room3State state)
         doorwayBlocker.position = doorwayA;
         sideBlock.position = XMFLOAT3(8.6f, 0.0f, 17.4f);
         doorwayWallCap.position = doorwayA;
+        // Door looks moved to the back wall in this state.
+        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 15.2f);
     }
 
     mRoom3LayoutProps.push_back(doorwayBlocker);
     mRoom3LayoutProps.push_back(sideBlock);
     mRoom3LayoutProps.push_back(doorwayWallCap);
+    mRoom3LayoutProps.push_back(movingDoorWall);
 }
 
 void Game::UpdateCollectibles(Camera& camera)
