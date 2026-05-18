@@ -60,8 +60,15 @@ void Game::CheckLoopingCorridor(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
+    // Only trigger the corridor loop when the player is still in the
+    // main corridor lane. This keeps the right-hand room free of
+    // teleportation behaviour.
+    bool isInsideMainCorridor =
+        playerPosition.x >= -2.0f &&
+        playerPosition.x <= 2.0f;
+
     // Trigger before the visible end of the corridor
-    if (playerPosition.z > 20.0f)
+    if (isInsideMainCorridor && playerPosition.z > 20.0f)
     {
         mLoopCount++;
 
