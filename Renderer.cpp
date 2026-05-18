@@ -583,5 +583,24 @@ void Renderer::RenderFrame()
         DrawCube(collectibleWorld, view, projection);
     }
 
+    const std::vector<SceneObject>& room3LayoutProps = mGame.GetRoom3LayoutProps();
+
+    for (int i = 0; i < room3LayoutProps.size(); i++)
+    {
+        SceneObject object = room3LayoutProps[i];
+
+        XMMATRIX objectWorld =
+            XMMatrixScaling(
+                object.scale.x,
+                object.scale.y,
+                object.scale.z) *
+            XMMatrixTranslation(
+                object.position.x,
+                object.position.y,
+                object.position.z);
+
+        DrawCube(objectWorld, view, projection);
+    }
+
     mSwapChain->Present(1, 0);
 }

@@ -14,6 +14,13 @@ struct Collectible
     bool isCollected;
 };
 
+enum class Room3State
+{
+    Normal,
+    ShiftedA,
+    ShiftedB
+};
+
 class Game
 {
 public:
@@ -25,6 +32,7 @@ public:
     void Update(Camera& camera);
 
     const std::vector<Collectible>& GetCollectibles() const;
+    const std::vector<SceneObject>& GetRoom3LayoutProps() const;
 
     int GetCollectedCount() const;
 
@@ -33,6 +41,9 @@ private:
     void CheckLoopingCorridor(Camera& camera);
 
     void CheckRoom2Illusion(Camera& camera);
+
+    void CheckRoom3Illusion(Camera& camera);
+    void ApplyRoom3Layout(Room3State state);
 
     void UpdateCollectibles(Camera& camera);
 
@@ -57,4 +68,9 @@ private:
     bool mHasPreviousPlayerPosition;
 
     bool mRoom2CanTrigger;
+
+    Room3State mRoom3State;
+    bool mRoom3CanTrigger;
+
+    std::vector<SceneObject> mRoom3LayoutProps;
 };
