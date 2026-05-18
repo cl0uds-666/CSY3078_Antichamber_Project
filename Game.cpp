@@ -176,8 +176,10 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
+    // Cover the whole usable right-room space so the illusion can be driven
+    // from wherever the player happens to be standing in the room.
     XMFLOAT3 activeZoneCentre = XMFLOAT3(7.1f, 0.0f, 18.0f);
-    XMFLOAT3 activeZoneHalfSize = XMFLOAT3(3.0f, 1.0f, 3.0f);
+    XMFLOAT3 activeZoneHalfSize = XMFLOAT3(4.5f, 1.0f, 2.6f);
 
     bool insideActiveZone = IsInsideTrigger(
         playerPosition,
@@ -192,47 +194,46 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
         return;
     }
 
-    XMFLOAT3 forwardDirection = camera.GetForwardDirection();
+    XMFLOAT3 activeDoorAnchor = XMFLOAT3(2.2f, 0.0f, 19.0f);
 
-    XMFLOAT3 layoutAnchors[3] =
+    if (mRoom3State == Room3State::ShiftedA)
     {
-        XMFLOAT3(2.2f, 0.0f, 19.0f),
-        XMFLOAT3(7.1f, 0.0f, 15.0f),
-        XMFLOAT3(7.1f, 0.0f, 21.0f)
-    };
-
-    float bestAnchorDot = -1.0f;
-
-    for (int i = 0; i < 3; i++)
+        activeDoorAnchor = XMFLOAT3(7.1f, 0.0f, 21.0f);
+    }
+    else if (mRoom3State == Room3State::ShiftedB)
     {
-        float anchorX = layoutAnchors[i].x - playerPosition.x;
-        float anchorZ = layoutAnchors[i].z - playerPosition.z;
-        float anchorLength = sqrtf(anchorX * anchorX + anchorZ * anchorZ);
-
-        if (anchorLength <= 0.001f)
-        {
-            continue;
-        }
-
-        float anchorDirectionX = anchorX / anchorLength;
-        float anchorDirectionZ = anchorZ / anchorLength;
-        float anchorDot =
-            forwardDirection.x * anchorDirectionX +
-            forwardDirection.z * anchorDirectionZ;
-
-        if (anchorDot > bestAnchorDot)
-        {
-            bestAnchorDot = anchorDot;
-        }
+        activeDoorAnchor = XMFLOAT3(7.1f, 0.0f, 15.0f);
     }
 
-    // Dot below this value means the player is at least about 80 degrees away
-    // from every key doorway anchor, so the door is safely out of view.
-    float lookAwayDotThreshold = 0.17f;
-    int requiredLookAwayFrames = 24;
-    int cooldownFrames = 45;
+    XMFLOAT3 forwardDirection = camera.GetForwardDirection();
 
-    bool isLookingAway = bestAnchorDot < lookAwayDotThreshold;
+    float anchorX = activeDoorAnchor.x - playerPosition.x;
+    float anchorZ = activeDoorAnchor.z - playerPosition.z;
+    float anchorLength = sqrtf(anchorX * anchorX + anchorZ * anchorZ);
+
+    if (anchorLength <= 0.001f)
+    {
+        mRoom3LookAwayFrameCount = 0;
+        return;
+    }
+
+    float anchorDirectionX = anchorX / anchorLength;
+    float anchorDirectionZ = anchorZ / anchorLength;
+    float activeDoorDot =
+        forwardDirection.x * anchorDirectionX +
+        forwardDirection.z * anchorDirectionZ;
+
+    // Looking at the current open door arms the next toggle. Looking away from
+    // that same door for a short moment advances the cycle. This is much more
+    // repeatable than requiring the player to look away from every possible
+    // doorway anchor at once.
+    float lookAtDotThreshold = 0.35f;
+    float lookAwayDotThreshold = -0.05f;
+    int requiredLookAwayFrames = 18;
+    int cooldownFrames = 30;
+
+    bool isLookingAtActiveDoor = activeDoorDot > lookAtDotThreshold;
+    bool isLookingAwayFromActiveDoor = activeDoorDot < lookAwayDotThreshold;
 
     if (mRoom3LookAwayCooldownFrames > 0)
     {
@@ -243,7 +244,7 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
 
     if (!mRoom3CanTrigger)
     {
-        if (!isLookingAway)
+        if (isLookingAtActiveDoor)
         {
             mRoom3CanTrigger = true;
         }
@@ -252,7 +253,7 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
         return;
     }
 
-    if (!isLookingAway)
+    if (!isLookingAwayFromActiveDoor)
     {
         mRoom3LookAwayFrameCount = 0;
         return;
@@ -290,7 +291,7 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
         << "[Room3 Debug] Look-away transition fired. "
         << ToRoom3StateString(previousState) << " -> "
         << ToRoom3StateString(mRoom3State) << " "
-        << "BestAnchorDot=" << bestAnchorDot << "\n";
+        << "ActiveDoorDot=" << activeDoorDot << "\n";
     Room3DebugLog(stream.str());
 }
 
