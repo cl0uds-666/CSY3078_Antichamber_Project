@@ -19,6 +19,8 @@ public:
 
     void SetPosition(XMFLOAT3 position);
 
+    void AddYaw(float deltaYaw);
+
 private:
 
     XMFLOAT3 mPosition;

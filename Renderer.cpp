@@ -51,6 +51,8 @@ bool Renderer::Initialise(HWND hwnd)
 
     mLevel.BuildLevel();
 
+    mGame.SetLevel(&mLevel);
+
     return true;
 }
 bool Renderer::CreateDeviceAndSwapChain(HWND hwnd)
@@ -558,6 +560,27 @@ void Renderer::RenderFrame()
                 object.position.z);
 
         DrawCube(objectWorld, view, projection);
+    }
+
+    const std::vector<Collectible>& collectibles = mGame.GetCollectibles();
+
+    for (int i = 0; i < collectibles.size(); i++)
+    {
+        Collectible collectible = collectibles[i];
+
+        if (!collectible.isSpawned || collectible.isCollected)
+        {
+            continue;
+        }
+
+        XMMATRIX collectibleWorld =
+            XMMatrixScaling(0.35f, 0.35f, 0.35f) *
+            XMMatrixTranslation(
+                collectible.position.x,
+                collectible.position.y,
+                collectible.position.z);
+
+        DrawCube(collectibleWorld, view, projection);
     }
 
     mSwapChain->Present(1, 0);
