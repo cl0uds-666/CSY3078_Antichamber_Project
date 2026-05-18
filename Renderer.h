@@ -29,6 +29,13 @@ struct ConstantBuffer
     XMMATRIX wvp;
 };
 
+enum class ScreenState
+{
+    Start,
+    Playing,
+    End
+};
+
 
 class Renderer
 {
@@ -63,6 +70,26 @@ private:
     void DrawCube(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
 
     void DrawHudCounter();
+
+    void DrawScreenOverlay(
+        const char* title,
+        const char* subtitle);
+
+    void DrawHudText(
+        const char* text,
+        float centreX,
+        float centreY,
+        float pixelSize,
+        XMMATRIX view,
+        XMMATRIX projection);
+
+    void DrawHudGlyph(
+        char character,
+        float x,
+        float y,
+        float pixelSize,
+        XMMATRIX view,
+        XMMATRIX projection);
 
     void DrawHudDigit(
         int digit,
@@ -105,5 +132,7 @@ private:
 
     Game mGame;
 
-    
+    ScreenState mScreenState;
+    bool mWasMouseDown;
+
 };
