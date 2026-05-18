@@ -1,5 +1,6 @@
 #include "Game.h"
-#include <iostream>
+#include <Windows.h>
+#include <sstream>
 
 namespace
 {
@@ -16,6 +17,11 @@ const char* ToRoom3StateString(Room3State state)
     }
 
     return "ShiftedB";
+}
+
+void Room3DebugLog(const std::string& message)
+{
+    OutputDebugStringA(message.c_str());
 }
 }
 
@@ -177,7 +183,8 @@ void Game::CheckRoom3Illusion(Camera& camera)
     debugFrameCounter++;
     if (debugFrameCounter >= 120)
     {
-        std::cout
+        std::ostringstream stream;
+        stream
             << "[Room3 Debug] Pos("
             << playerPosition.x << ", "
             << playerPosition.y << ", "
@@ -186,19 +193,21 @@ void Game::CheckRoom3Illusion(Camera& camera)
             << "CanTrigger=" << (mRoom3CanTrigger ? "true" : "false") << " "
             << "InsideCentre=" << (insideCentre ? "true" : "false") << " "
             << "InsideConnector=" << (insideConnector ? "true" : "false")
-            << std::endl;
+            << "\n";
+        Room3DebugLog(stream.str());
         debugFrameCounter = 0;
     }
 
     if (insideAnyTrigger != wasInsideAnyTrigger)
     {
-        std::cout
+        std::ostringstream stream;
+        stream
             << "[Room3 Debug] Trigger boundary crossed. "
             << "insideAnyTrigger=" << (insideAnyTrigger ? "true" : "false") << " "
             << "Pos(" << playerPosition.x << ", "
             << playerPosition.y << ", "
-            << playerPosition.z << ")"
-            << std::endl;
+            << playerPosition.z << ")\n";
+        Room3DebugLog(stream.str());
         wasInsideAnyTrigger = insideAnyTrigger;
     }
 
@@ -267,14 +276,15 @@ void Game::CheckRoom3Illusion(Camera& camera)
     camera.SetPosition(shiftedPosition);
     mRoom3CanTrigger = false;
 
-    std::cout
+    std::ostringstream stream;
+    stream
         << "[Room3 Debug] Transition fired. "
         << ToRoom3StateString(previousState) << " -> "
         << ToRoom3StateString(mRoom3State) << " "
         << "NewPos(" << shiftedPosition.x << ", "
         << shiftedPosition.y << ", "
-        << shiftedPosition.z << ")"
-        << std::endl;
+        << shiftedPosition.z << ")\n";
+    Room3DebugLog(stream.str());
 }
 
 void Game::UpdateCollectibles(Camera& camera)
