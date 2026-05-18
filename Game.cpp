@@ -301,6 +301,11 @@ void Game::ApplyRoom3Layout(Room3State state)
 {
     mRoom3LayoutProps.clear();
 
+    // Two doorway lanes in validated right-room playable bounds.
+    // Doorway A = left lane, Doorway B = right lane.
+    XMFLOAT3 doorwayA = XMFLOAT3(5.9f, 0.0f, 18.6f);
+    XMFLOAT3 doorwayB = XMFLOAT3(8.9f, 0.0f, 18.6f);
+
     SceneObject centralPillar;
     centralPillar.position = XMFLOAT3(7.1f, 0.0f, 18.2f);
     centralPillar.scale = XMFLOAT3(0.45f, 1.8f, 0.45f);
@@ -314,20 +319,21 @@ void Game::ApplyRoom3Layout(Room3State state)
 
     if (state == Room3State::Normal)
     {
+        // Neutral baseline: centre blocker, both doorway lanes still readable.
         doorwayBlocker.position = XMFLOAT3(7.1f, 0.0f, 16.9f);
         sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
     }
     else if (state == Room3State::ShiftedA)
     {
-        // Block the right doorway lane, keep left path open.
-        doorwayBlocker.position = XMFLOAT3(8.9f, 0.0f, 18.6f);
-        sideBlock.position = XMFLOAT3(5.9f, 0.0f, 17.4f);
+        // ShiftedA: block doorway B, keep doorway A open.
+        doorwayBlocker.position = doorwayB;
+        sideBlock.position = XMFLOAT3(6.2f, 0.0f, 17.4f);
     }
     else
     {
-        // Block the left doorway lane, keep right path open.
-        doorwayBlocker.position = XMFLOAT3(5.3f, 0.0f, 18.6f);
-        sideBlock.position = XMFLOAT3(8.5f, 0.0f, 17.4f);
+        // ShiftedB: block doorway A, keep doorway B open.
+        doorwayBlocker.position = doorwayA;
+        sideBlock.position = XMFLOAT3(8.6f, 0.0f, 17.4f);
     }
 
     mRoom3LayoutProps.push_back(doorwayBlocker);
