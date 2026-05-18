@@ -61,6 +61,8 @@ private:
 
     int mLoopCount;
     bool mFirstCollectibleUnlocked;
+    bool mLeftRoomCollectibleUnlocked;
+    bool mRoom3CollectibleUnlocked;
 
     std::vector<Collectible> mCollectibles;
     int mCollectedCount;

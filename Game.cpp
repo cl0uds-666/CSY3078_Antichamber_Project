@@ -5,6 +5,10 @@
 
 namespace
 {
+const int CorridorLoopCollectibleIndex = 0;
+const int LeftRoomCollectibleIndex = 1;
+const int Room3CollectibleIndex = 2;
+
 const char* ToRoom3StateString(Room3State state)
 {
     if (state == Room3State::Normal)
@@ -32,6 +36,8 @@ Game::Game()
 
     mLoopCount = 0;
     mFirstCollectibleUnlocked = false;
+    mLeftRoomCollectibleUnlocked = false;
+    mRoom3CollectibleUnlocked = false;
 
     mCollectedCount = 0;
     mHasPreviousPlayerPosition = false;
@@ -43,14 +49,29 @@ Game::Game()
     mRoom3LookAwayCooldownFrames = 0;
     ApplyRoom3Layout(mRoom3State);
 
-    Collectible firstCollectible;
+    Collectible corridorLoopCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
     // Keep this away from room filler geometry to avoid hidden pickups.
-    firstCollectible.position = XMFLOAT3(0.0f, -0.2f, 19.0f);
-    firstCollectible.isSpawned = false;
-    firstCollectible.isCollected = false;
+    corridorLoopCollectible.position = XMFLOAT3(0.0f, -0.2f, 17.2f);
+    corridorLoopCollectible.isSpawned = false;
+    corridorLoopCollectible.isCollected = false;
 
-    mCollectibles.push_back(firstCollectible);
+    Collectible leftRoomCollectible;
+    // This appears after using either left-room fake exit. Keep it away from
+    // the teleporter return point at z 10 so the player can notice it first.
+    leftRoomCollectible.position = XMFLOAT3(1.2f, -0.2f, 13.8f);
+    leftRoomCollectible.isSpawned = false;
+    leftRoomCollectible.isCollected = false;
+
+    Collectible room3Collectible;
+    // Spawn just outside the looking room but before the corridor loop trigger.
+    room3Collectible.position = XMFLOAT3(-1.2f, -0.2f, 18.2f);
+    room3Collectible.isSpawned = false;
+    room3Collectible.isCollected = false;
+
+    mCollectibles.push_back(corridorLoopCollectible);
+    mCollectibles.push_back(leftRoomCollectible);
+    mCollectibles.push_back(room3Collectible);
 }
 
 void Game::SetLevel(const Level* level)
@@ -116,10 +137,10 @@ void Game::CheckLoopingCorridor(Camera& camera)
             2.0f));
 
         // After 3 loops, unlock the first collectible
-        if (mLoopCount >= 3)
+        if (mLoopCount >= 3 && !mFirstCollectibleUnlocked)
         {
             mFirstCollectibleUnlocked = true;
-            mCollectibles[0].isSpawned = true;
+            mCollectibles[CorridorLoopCollectibleIndex].isSpawned = true;
         }
     }
 }
@@ -153,6 +174,13 @@ void Game::CheckRoom2Illusion(Camera& camera)
         // Back-side fake exit: return to corridor and turn right (90 deg).
         camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
         camera.AddYaw(-XM_PIDIV2);
+
+        if (!mLeftRoomCollectibleUnlocked)
+        {
+            mLeftRoomCollectibleUnlocked = true;
+            mCollectibles[LeftRoomCollectibleIndex].isSpawned = true;
+        }
+
         mRoom2CanTrigger = false;
         return;
     }
@@ -162,6 +190,13 @@ void Game::CheckRoom2Illusion(Camera& camera)
         // Front-side fake exit: return to corridor and turn left (-90 deg).
         camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
         camera.AddYaw(XM_PIDIV2);
+
+        if (!mLeftRoomCollectibleUnlocked)
+        {
+            mLeftRoomCollectibleUnlocked = true;
+            mCollectibles[LeftRoomCollectibleIndex].isSpawned = true;
+        }
+
         mRoom2CanTrigger = false;
         return;
     }
@@ -279,6 +314,14 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
     else
     {
         mRoom3State = Room3State::Normal;
+    }
+
+    if (previousState == Room3State::ShiftedB &&
+        mRoom3State == Room3State::Normal &&
+        !mRoom3CollectibleUnlocked)
+    {
+        mRoom3CollectibleUnlocked = true;
+        mCollectibles[Room3CollectibleIndex].isSpawned = true;
     }
 
     mRoom3CanTrigger = false;
