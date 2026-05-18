@@ -38,6 +38,7 @@ Game::Game()
     mRoom2CanTrigger = true;
     mRoom3State = Room3State::Normal;
     mRoom3CanTrigger = true;
+    ApplyRoom3Layout(mRoom3State);
 
     Collectible firstCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
@@ -82,6 +83,11 @@ const std::vector<Collectible>& Game::GetCollectibles() const
 int Game::GetCollectedCount() const
 {
     return mCollectedCount;
+}
+
+const std::vector<SceneObject>& Game::GetRoom3LayoutProps() const
+{
+    return mRoom3LayoutProps;
 }
 
 void Game::CheckLoopingCorridor(Camera& camera)
@@ -278,6 +284,7 @@ void Game::CheckRoom3Illusion(Camera& camera)
 
     camera.SetPosition(shiftedPosition);
     mRoom3CanTrigger = false;
+    ApplyRoom3Layout(mRoom3State);
 
     std::ostringstream stream;
     stream
@@ -288,6 +295,43 @@ void Game::CheckRoom3Illusion(Camera& camera)
         << shiftedPosition.y << ", "
         << shiftedPosition.z << ")\n";
     Room3DebugLog(stream.str());
+}
+
+void Game::ApplyRoom3Layout(Room3State state)
+{
+    mRoom3LayoutProps.clear();
+
+    SceneObject centralPillar;
+    centralPillar.position = XMFLOAT3(7.1f, 0.0f, 18.2f);
+    centralPillar.scale = XMFLOAT3(0.45f, 1.8f, 0.45f);
+    mRoom3LayoutProps.push_back(centralPillar);
+
+    SceneObject doorwayBlocker;
+    doorwayBlocker.scale = XMFLOAT3(0.55f, 1.4f, 0.55f);
+
+    SceneObject sideBlock;
+    sideBlock.scale = XMFLOAT3(0.9f, 1.0f, 0.4f);
+
+    if (state == Room3State::Normal)
+    {
+        doorwayBlocker.position = XMFLOAT3(7.1f, 0.0f, 16.9f);
+        sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
+    }
+    else if (state == Room3State::ShiftedA)
+    {
+        // Block the right doorway lane, keep left path open.
+        doorwayBlocker.position = XMFLOAT3(8.9f, 0.0f, 18.6f);
+        sideBlock.position = XMFLOAT3(5.9f, 0.0f, 17.4f);
+    }
+    else
+    {
+        // Block the left doorway lane, keep right path open.
+        doorwayBlocker.position = XMFLOAT3(5.3f, 0.0f, 18.6f);
+        sideBlock.position = XMFLOAT3(8.5f, 0.0f, 17.4f);
+    }
+
+    mRoom3LayoutProps.push_back(doorwayBlocker);
+    mRoom3LayoutProps.push_back(sideBlock);
 }
 
 void Game::UpdateCollectibles(Camera& camera)
@@ -327,6 +371,7 @@ void Game::ResolveCollision(Camera& camera)
     XMFLOAT3 playerPosition = camera.GetPosition();
 
     const std::vector<SceneObject>& sceneObjects = mLevel->GetSceneObjects();
+    const std::vector<SceneObject>& room3LayoutProps = mRoom3LayoutProps;
 
     float playerHalfWidth = 0.35f;
     float playerHalfHeight = 0.8f;
@@ -334,6 +379,39 @@ void Game::ResolveCollision(Camera& camera)
     for (int i = 0; i < sceneObjects.size(); i++)
     {
         SceneObject object = sceneObjects[i];
+
+        float objectMinX = object.position.x - object.scale.x;
+        float objectMaxX = object.position.x + object.scale.x;
+
+        float objectMinY = object.position.y - object.scale.y;
+        float objectMaxY = object.position.y + object.scale.y;
+
+        float objectMinZ = object.position.z - object.scale.z;
+        float objectMaxZ = object.position.z + object.scale.z;
+
+        float playerMinX = playerPosition.x - playerHalfWidth;
+        float playerMaxX = playerPosition.x + playerHalfWidth;
+
+        float playerMinY = playerPosition.y - playerHalfHeight;
+        float playerMaxY = playerPosition.y + playerHalfHeight;
+
+        float playerMinZ = playerPosition.z - playerHalfWidth;
+        float playerMaxZ = playerPosition.z + playerHalfWidth;
+
+        bool overlapX = playerMaxX > objectMinX && playerMinX < objectMaxX;
+        bool overlapY = playerMaxY > objectMinY && playerMinY < objectMaxY;
+        bool overlapZ = playerMaxZ > objectMinZ && playerMinZ < objectMaxZ;
+
+        if (overlapX && overlapY && overlapZ)
+        {
+            camera.SetPosition(mPreviousPlayerPosition);
+            return;
+        }
+    }
+
+    for (int i = 0; i < room3LayoutProps.size(); i++)
+    {
+        SceneObject object = room3LayoutProps[i];
 
         float objectMinX = object.position.x - object.scale.x;
         float objectMaxX = object.position.x + object.scale.x;
