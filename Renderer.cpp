@@ -5,6 +5,8 @@
 Renderer::Renderer()
 {
     mRotationAngle = 0.0f;
+    mGameStarted = false;
+    mGameEnded = false;
 }
 
 bool Renderer::Initialise(HWND hwnd)
@@ -30,6 +32,11 @@ bool Renderer::Initialise(HWND hwnd)
     }
 
     if (!CreateRasterizerState())
+    {
+        return false;
+    }
+
+    if (!CreateHudDepthStencilState())
     {
         return false;
     }
@@ -188,6 +195,28 @@ bool Renderer::CreateRasterizerState()
     }
 
     mDeviceContext->RSSetState(mRasterizerState.Get());
+
+    return true;
+}
+
+
+bool Renderer::CreateHudDepthStencilState()
+{
+    D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
+
+    depthStencilDesc.DepthEnable = FALSE;
+    depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+    depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+    depthStencilDesc.StencilEnable = FALSE;
+
+    HRESULT hr = mDevice->CreateDepthStencilState(
+        &depthStencilDesc,
+        mHudDepthStencilState.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        return false;
+    }
 
     return true;
 }
@@ -501,6 +530,312 @@ void Renderer::DrawCube(
 
 
 
+void Renderer::DrawHudGlyph(
+    char character,
+    float x,
+    float y,
+    float cellSize,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    const char* rows[7] =
+    {
+        "     ",
+        "     ",
+        "     ",
+        "     ",
+        "     ",
+        "     ",
+        "     "
+    };
+
+    switch (character)
+    {
+    case 'A':
+        rows[0] = " ### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#####"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = "#   #";
+        break;
+    case 'B':
+        rows[0] = "#### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#### "; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = "#### ";
+        break;
+    case 'C':
+        rows[0] = " ####"; rows[1] = "#    "; rows[2] = "#    "; rows[3] = "#    "; rows[4] = "#    "; rows[5] = "#    "; rows[6] = " ####";
+        break;
+    case 'D':
+        rows[0] = "#### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#   #"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = "#### ";
+        break;
+    case 'E':
+        rows[0] = "#####"; rows[1] = "#    "; rows[2] = "#    "; rows[3] = "#### "; rows[4] = "#    "; rows[5] = "#    "; rows[6] = "#####";
+        break;
+    case 'F':
+        rows[0] = "#####"; rows[1] = "#    "; rows[2] = "#    "; rows[3] = "#### "; rows[4] = "#    "; rows[5] = "#    "; rows[6] = "#    ";
+        break;
+    case 'G':
+        rows[0] = " ####"; rows[1] = "#    "; rows[2] = "#    "; rows[3] = "#  ##"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = " ####";
+        break;
+    case 'H':
+        rows[0] = "#   #"; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#####"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = "#   #";
+        break;
+    case 'I':
+        rows[0] = "#####"; rows[1] = "  #  "; rows[2] = "  #  "; rows[3] = "  #  "; rows[4] = "  #  "; rows[5] = "  #  "; rows[6] = "#####";
+        break;
+    case 'J':
+        rows[0] = "#####"; rows[1] = "   # "; rows[2] = "   # "; rows[3] = "   # "; rows[4] = "   # "; rows[5] = "#  # "; rows[6] = " ##  ";
+        break;
+    case 'K':
+        rows[0] = "#   #"; rows[1] = "#  # "; rows[2] = "# #  "; rows[3] = "##   "; rows[4] = "# #  "; rows[5] = "#  # "; rows[6] = "#   #";
+        break;
+    case 'L':
+        rows[0] = "#    "; rows[1] = "#    "; rows[2] = "#    "; rows[3] = "#    "; rows[4] = "#    "; rows[5] = "#    "; rows[6] = "#####";
+        break;
+    case 'M':
+        rows[0] = "#   #"; rows[1] = "## ##"; rows[2] = "# # #"; rows[3] = "#   #"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = "#   #";
+        break;
+    case 'N':
+        rows[0] = "#   #"; rows[1] = "##  #"; rows[2] = "# # #"; rows[3] = "#  ##"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = "#   #";
+        break;
+    case 'O':
+        rows[0] = " ### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#   #"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = " ### ";
+        break;
+    case 'P':
+        rows[0] = "#### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#### "; rows[4] = "#    "; rows[5] = "#    "; rows[6] = "#    ";
+        break;
+    case 'Q':
+        rows[0] = " ### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#   #"; rows[4] = "# # #"; rows[5] = "#  # "; rows[6] = " ## #";
+        break;
+    case 'R':
+        rows[0] = "#### "; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#### "; rows[4] = "# #  "; rows[5] = "#  # "; rows[6] = "#   #";
+        break;
+    case 'S':
+        rows[0] = " ####"; rows[1] = "#    "; rows[2] = "#    "; rows[3] = " ### "; rows[4] = "    #"; rows[5] = "    #"; rows[6] = "#### ";
+        break;
+    case 'T':
+        rows[0] = "#####"; rows[1] = "  #  "; rows[2] = "  #  "; rows[3] = "  #  "; rows[4] = "  #  "; rows[5] = "  #  "; rows[6] = "  #  ";
+        break;
+    case 'U':
+        rows[0] = "#   #"; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#   #"; rows[4] = "#   #"; rows[5] = "#   #"; rows[6] = " ### ";
+        break;
+    case 'V':
+        rows[0] = "#   #"; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "#   #"; rows[4] = "#   #"; rows[5] = " # # "; rows[6] = "  #  ";
+        break;
+    case 'W':
+        rows[0] = "#   #"; rows[1] = "#   #"; rows[2] = "#   #"; rows[3] = "# # #"; rows[4] = "# # #"; rows[5] = "## ##"; rows[6] = "#   #";
+        break;
+    case 'X':
+        rows[0] = "#   #"; rows[1] = "#   #"; rows[2] = " # # "; rows[3] = "  #  "; rows[4] = " # # "; rows[5] = "#   #"; rows[6] = "#   #";
+        break;
+    case 'Y':
+        rows[0] = "#   #"; rows[1] = "#   #"; rows[2] = " # # "; rows[3] = "  #  "; rows[4] = "  #  "; rows[5] = "  #  "; rows[6] = "  #  ";
+        break;
+    case 'Z':
+        rows[0] = "#####"; rows[1] = "    #"; rows[2] = "   # "; rows[3] = "  #  "; rows[4] = " #   "; rows[5] = "#    "; rows[6] = "#####";
+        break;
+    case '0':
+        rows[0] = " ### "; rows[1] = "#   #"; rows[2] = "#  ##"; rows[3] = "# # #"; rows[4] = "##  #"; rows[5] = "#   #"; rows[6] = " ### ";
+        break;
+    case '1':
+        rows[0] = "  #  "; rows[1] = " ##  "; rows[2] = "  #  "; rows[3] = "  #  "; rows[4] = "  #  "; rows[5] = "  #  "; rows[6] = "#####";
+        break;
+    case '2':
+        rows[0] = " ### "; rows[1] = "#   #"; rows[2] = "    #"; rows[3] = "   # "; rows[4] = "  #  "; rows[5] = " #   "; rows[6] = "#####";
+        break;
+    case '3':
+        rows[0] = "#### "; rows[1] = "    #"; rows[2] = "    #"; rows[3] = " ### "; rows[4] = "    #"; rows[5] = "    #"; rows[6] = "#### ";
+        break;
+    default:
+        break;
+    }
+
+    for (int row = 0; row < 7; row++)
+    {
+        for (int column = 0; column < 5; column++)
+        {
+            if (rows[row][column] == '#')
+            {
+                DrawHudSegment(
+                    x + column * cellSize,
+                    y - row * cellSize,
+                    cellSize * 0.32f,
+                    cellSize * 0.32f,
+                    0.0f,
+                    view,
+                    projection);
+            }
+        }
+    }
+}
+
+void Renderer::DrawHudText(
+    const char* text,
+    float centerX,
+    float centerY,
+    float cellSize,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    int characterCount = 0;
+
+    while (text[characterCount] != '\0')
+    {
+        characterCount++;
+    }
+
+    float characterStride = cellSize * 6.0f;
+    float textWidth = characterCount * characterStride - cellSize;
+    float startX = centerX - textWidth * 0.5f;
+    float startY = centerY + cellSize * 3.0f;
+
+    for (int i = 0; i < characterCount; i++)
+    {
+        DrawHudGlyph(
+            text[i],
+            startX + i * characterStride,
+            startY,
+            cellSize,
+            view,
+            projection);
+    }
+}
+
+void Renderer::DrawStartScreen()
+{
+    XMMATRIX hudView = XMMatrixIdentity();
+    XMMATRIX hudProjection = XMMatrixOrthographicLH(
+        1280.0f,
+        720.0f,
+        0.0f,
+        10.0f);
+
+    mDeviceContext->OMSetDepthStencilState(mHudDepthStencilState.Get(), 0);
+
+    DrawHudText("CLICK TO PLAY", 0.0f, 35.0f, 13.0f, hudView, hudProjection);
+    DrawHudText("COLLECT ALL 3", 0.0f, -80.0f, 9.0f, hudView, hudProjection);
+
+    mDeviceContext->OMSetDepthStencilState(nullptr, 0);
+}
+
+void Renderer::DrawEndScreen()
+{
+    XMMATRIX hudView = XMMatrixIdentity();
+    XMMATRIX hudProjection = XMMatrixOrthographicLH(
+        1280.0f,
+        720.0f,
+        0.0f,
+        10.0f);
+
+    mDeviceContext->OMSetDepthStencilState(mHudDepthStencilState.Get(), 0);
+
+    DrawHudText("ALL COLLECTIBLES FOUND", 0.0f, 55.0f, 8.0f, hudView, hudProjection);
+    DrawHudText("YOU WIN", 0.0f, -55.0f, 14.0f, hudView, hudProjection);
+
+    mDeviceContext->OMSetDepthStencilState(nullptr, 0);
+}
+
+void Renderer::DrawHudSegment(
+    float x,
+    float y,
+    float scaleX,
+    float scaleY,
+    float rotation,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    XMMATRIX world =
+        XMMatrixScaling(scaleX, scaleY, 0.04f) *
+        XMMatrixRotationZ(rotation) *
+        XMMatrixTranslation(x, y, 1.0f);
+
+    DrawCube(world, view, projection);
+}
+
+void Renderer::DrawHudDigit(
+    int digit,
+    float x,
+    float y,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    bool segments[10][7] =
+    {
+        { true,  true,  true,  true,  true,  true,  false },
+        { false, true,  true,  false, false, false, false },
+        { true,  true,  false, true,  true,  false, true  },
+        { true,  true,  true,  true,  false, false, true  },
+        { false, true,  true,  false, false, true,  true  },
+        { true,  false, true,  true,  false, true,  true  },
+        { true,  false, true,  true,  true,  true,  true  },
+        { true,  true,  true,  false, false, false, false },
+        { true,  true,  true,  true,  true,  true,  true  },
+        { true,  true,  true,  true,  false, true,  true  }
+    };
+
+    if (digit < 0 || digit > 9)
+    {
+        return;
+    }
+
+    float horizontalScaleX = 18.0f;
+    float horizontalScaleY = 3.0f;
+    float verticalScaleX = 3.0f;
+    float verticalScaleY = 13.0f;
+
+    if (segments[digit][0])
+    {
+        DrawHudSegment(x, y + 22.0f, horizontalScaleX, horizontalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][1])
+    {
+        DrawHudSegment(x + 18.0f, y + 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][2])
+    {
+        DrawHudSegment(x + 18.0f, y - 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][3])
+    {
+        DrawHudSegment(x, y - 22.0f, horizontalScaleX, horizontalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][4])
+    {
+        DrawHudSegment(x - 18.0f, y - 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][5])
+    {
+        DrawHudSegment(x - 18.0f, y + 11.0f, verticalScaleX, verticalScaleY, 0.0f, view, projection);
+    }
+
+    if (segments[digit][6])
+    {
+        DrawHudSegment(x, y, horizontalScaleX, horizontalScaleY, 0.0f, view, projection);
+    }
+}
+
+void Renderer::DrawHudCounter()
+{
+    int collectedCount = mGame.GetCollectedCount();
+    int totalCollectibles = static_cast<int>(mGame.GetCollectibles().size());
+
+    XMMATRIX hudView = XMMatrixIdentity();
+    XMMATRIX hudProjection = XMMatrixOrthographicLH(
+        1280.0f,
+        720.0f,
+        0.0f,
+        10.0f);
+
+    mDeviceContext->OMSetDepthStencilState(mHudDepthStencilState.Get(), 0);
+
+    // Top-left HUD counter: collected / total.
+    DrawHudDigit(collectedCount, -575.0f, 315.0f, hudView, hudProjection);
+    DrawHudSegment(-535.0f, 315.0f, 3.0f, 22.0f, -0.45f, hudView, hudProjection);
+    DrawHudDigit(totalCollectibles, -495.0f, 315.0f, hudView, hudProjection);
+
+    mDeviceContext->OMSetDepthStencilState(nullptr, 0);
+}
+
 void Renderer::RenderFrame()
 {
     float colour[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -523,9 +858,42 @@ void Renderer::RenderFrame()
         1.0f,
         0);
 
-    mCamera.Update();
+    if (!mGameStarted)
+    {
+        if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) ||
+            (GetAsyncKeyState(VK_RETURN) & 0x8000))
+        {
+            mGameStarted = true;
+        }
+        else
+        {
+            DrawStartScreen();
+            mSwapChain->Present(1, 0);
+            return;
+        }
+    }
 
-    mGame.Update(mCamera);
+    if (!mGameEnded)
+    {
+        mCamera.Update();
+
+        mGame.Update(mCamera);
+
+        int collectedCount = mGame.GetCollectedCount();
+        int totalCollectibles = static_cast<int>(mGame.GetCollectibles().size());
+
+        if (totalCollectibles > 0 && collectedCount >= totalCollectibles)
+        {
+            mGameEnded = true;
+        }
+    }
+
+    if (mGameEnded)
+    {
+        DrawEndScreen();
+        mSwapChain->Present(1, 0);
+        return;
+    }
 
     // Update cube rotation
 
@@ -601,6 +969,8 @@ void Renderer::RenderFrame()
 
         DrawCube(objectWorld, view, projection);
     }
+
+    DrawHudCounter();
 
     mSwapChain->Present(1, 0);
 }

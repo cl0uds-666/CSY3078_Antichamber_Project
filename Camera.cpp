@@ -72,6 +72,14 @@ XMFLOAT3 Camera::GetPosition() const
     return mPosition;
 }
 
+XMFLOAT3 Camera::GetForwardDirection() const
+{
+    return XMFLOAT3(
+        sinf(mYaw),
+        0.0f,
+        cosf(mYaw));
+}
+
 void Camera::SetPosition(XMFLOAT3 position)
 {
     mPosition = position;

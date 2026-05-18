@@ -165,15 +165,24 @@ void Level::AddRightIllusionRoom()
         XMFLOAT3(roomEndX, 0.0f, roomCentreZ),
         XMFLOAT3(0.2f, 2.0f, 3.8f));
 
-    // Back wall starts at corridor wall and runs to outer wall
+    // Back wall starts at corridor wall and runs to outer wall.
+    // Leave a central doorway-sized gap that Room 3 can either melt open
+    // or reseal with a dynamic door slab.
     AddBox(
-        XMFLOAT3(roomCentreX, 0.0f, roomBackZ),
-        XMFLOAT3(6.2f, 2.0f, 0.2f));
+        XMFLOAT3(4.05f, 0.0f, roomBackZ),
+        XMFLOAT3(1.85f, 2.0f, 0.2f));
+    AddBox(
+        XMFLOAT3(10.15f, 0.0f, roomBackZ),
+        XMFLOAT3(1.85f, 2.0f, 0.2f));
 
-    // Front wall starts at corridor wall and runs to outer wall
+    // Front wall uses the same split so the original corridor entrance can
+    // appear to shift onto this wall instead of becoming a floating block.
     AddBox(
-        XMFLOAT3(roomCentreX, 0.0f, roomFrontZ),
-        XMFLOAT3(6.2f, 2.0f, 0.2f));
+        XMFLOAT3(4.05f, 0.0f, roomFrontZ),
+        XMFLOAT3(1.85f, 2.0f, 0.2f));
+    AddBox(
+        XMFLOAT3(10.15f, 0.0f, roomFrontZ),
+        XMFLOAT3(1.85f, 2.0f, 0.2f));
 
     // Extra back room for the two-entrance illusion later
     AddBox(
