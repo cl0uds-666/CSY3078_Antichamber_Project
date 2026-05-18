@@ -52,6 +52,8 @@ private:
 
     bool CreateRasterizerState();
 
+    bool CreateHudDepthStencilState();
+
     bool CreateShaders();
 
     bool CreateCube();
@@ -60,8 +62,23 @@ private:
 
     void DrawCube(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
 
+    void DrawHudCounter();
 
+    void DrawHudDigit(
+        int digit,
+        float x,
+        float y,
+        XMMATRIX view,
+        XMMATRIX projection);
 
+    void DrawHudSegment(
+        float x,
+        float y,
+        float scaleX,
+        float scaleY,
+        float rotation,
+        XMMATRIX view,
+        XMMATRIX projection);
 
 private:
 
@@ -79,6 +96,7 @@ private:
     ComPtr<ID3D11Buffer> mIndexBuffer;
     ComPtr<ID3D11Buffer> mConstantBuffer;
     ComPtr<ID3D11RasterizerState> mRasterizerState;
+    ComPtr<ID3D11DepthStencilState> mHudDepthStencilState;
 
     float mRotationAngle;
     Camera mCamera;

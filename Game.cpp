@@ -1,9 +1,14 @@
 #include "Game.h"
 #include <Windows.h>
+#include <cmath>
 #include <sstream>
 
 namespace
 {
+const int CorridorLoopCollectibleIndex = 0;
+const int LeftRoomCollectibleIndex = 1;
+const int Room3CollectibleIndex = 2;
+
 const char* ToRoom3StateString(Room3State state)
 {
     if (state == Room3State::Normal)
@@ -31,6 +36,8 @@ Game::Game()
 
     mLoopCount = 0;
     mFirstCollectibleUnlocked = false;
+    mLeftRoomCollectibleUnlocked = false;
+    mRoom3CollectibleUnlocked = false;
 
     mCollectedCount = 0;
     mHasPreviousPlayerPosition = false;
@@ -38,16 +45,33 @@ Game::Game()
     mRoom2CanTrigger = true;
     mRoom3State = Room3State::Normal;
     mRoom3CanTrigger = true;
+    mRoom3LookAwayFrameCount = 0;
+    mRoom3LookAwayCooldownFrames = 0;
     ApplyRoom3Layout(mRoom3State);
 
-    Collectible firstCollectible;
+    Collectible corridorLoopCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
     // Keep this away from room filler geometry to avoid hidden pickups.
-    firstCollectible.position = XMFLOAT3(0.0f, -0.2f, 19.0f);
-    firstCollectible.isSpawned = false;
-    firstCollectible.isCollected = false;
+    corridorLoopCollectible.position = XMFLOAT3(0.0f, -0.2f, 17.2f);
+    corridorLoopCollectible.isSpawned = false;
+    corridorLoopCollectible.isCollected = false;
 
-    mCollectibles.push_back(firstCollectible);
+    Collectible leftRoomCollectible;
+    // This appears after using either left-room fake exit. Keep it away from
+    // the teleporter return point at z 10 so the player can notice it first.
+    leftRoomCollectible.position = XMFLOAT3(1.2f, -0.2f, 13.8f);
+    leftRoomCollectible.isSpawned = false;
+    leftRoomCollectible.isCollected = false;
+
+    Collectible room3Collectible;
+    // Spawn just outside the looking room but before the corridor loop trigger.
+    room3Collectible.position = XMFLOAT3(-1.2f, -0.2f, 18.2f);
+    room3Collectible.isSpawned = false;
+    room3Collectible.isCollected = false;
+
+    mCollectibles.push_back(corridorLoopCollectible);
+    mCollectibles.push_back(leftRoomCollectible);
+    mCollectibles.push_back(room3Collectible);
 }
 
 void Game::SetLevel(const Level* level)
@@ -66,7 +90,7 @@ void Game::Update(Camera& camera)
     CheckLoopingCorridor(camera);
 
     CheckRoom2Illusion(camera);
-    CheckRoom3Illusion(camera);
+    CheckRoom3LookAwayToggle(camera);
 
     ResolveCollision(camera);
 
@@ -113,10 +137,10 @@ void Game::CheckLoopingCorridor(Camera& camera)
             2.0f));
 
         // After 3 loops, unlock the first collectible
-        if (mLoopCount >= 3)
+        if (mLoopCount >= 3 && !mFirstCollectibleUnlocked)
         {
             mFirstCollectibleUnlocked = true;
-            mCollectibles[0].isSpawned = true;
+            mCollectibles[CorridorLoopCollectibleIndex].isSpawned = true;
         }
     }
 }
@@ -150,6 +174,13 @@ void Game::CheckRoom2Illusion(Camera& camera)
         // Back-side fake exit: return to corridor and turn right (90 deg).
         camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
         camera.AddYaw(-XM_PIDIV2);
+
+        if (!mLeftRoomCollectibleUnlocked)
+        {
+            mLeftRoomCollectibleUnlocked = true;
+            mCollectibles[LeftRoomCollectibleIndex].isSpawned = true;
+        }
+
         mRoom2CanTrigger = false;
         return;
     }
@@ -159,6 +190,13 @@ void Game::CheckRoom2Illusion(Camera& camera)
         // Front-side fake exit: return to corridor and turn left (-90 deg).
         camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
         camera.AddYaw(XM_PIDIV2);
+
+        if (!mLeftRoomCollectibleUnlocked)
+        {
+            mLeftRoomCollectibleUnlocked = true;
+            mCollectibles[LeftRoomCollectibleIndex].isSpawned = true;
+        }
+
         mRoom2CanTrigger = false;
         return;
     }
@@ -166,134 +204,137 @@ void Game::CheckRoom2Illusion(Camera& camera)
 
 void Game::CheckRoom3Illusion(Camera& camera)
 {
+    CheckRoom3LookAwayToggle(camera);
+}
+
+void Game::CheckRoom3LookAwayToggle(Camera& camera)
+{
     XMFLOAT3 playerPosition = camera.GetPosition();
-    Room3State previousState = mRoom3State;
 
-    // Tuned to observed playable right-room area from debug traces:
-    // approximately x in [5.5, 10.8], z in [15.5, 20.0].
-    // We allow transitions in:
-    //  - a central room zone
-    //  - a connector/front zone near room entrance.
-    XMFLOAT3 rightRoomCentreTrigger = XMFLOAT3(7.1f, 0.0f, 18.7f);
-    XMFLOAT3 rightRoomCentreHalfSize = XMFLOAT3(1.8f, 1.0f, 1.2f);
+    // Cover the whole usable right-room space so the illusion can be driven
+    // from wherever the player happens to be standing in the room.
+    XMFLOAT3 activeZoneCentre = XMFLOAT3(7.1f, 0.0f, 18.0f);
+    XMFLOAT3 activeZoneHalfSize = XMFLOAT3(4.5f, 1.0f, 2.6f);
 
-    XMFLOAT3 connectorTrigger = XMFLOAT3(7.1f, 0.0f, 16.6f);
-    XMFLOAT3 connectorHalfSize = XMFLOAT3(1.6f, 1.0f, 1.0f);
+    bool insideActiveZone = IsInsideTrigger(
+        playerPosition,
+        activeZoneCentre,
+        activeZoneHalfSize);
 
-    bool insideCentre =
-        IsInsideTrigger(playerPosition, rightRoomCentreTrigger, rightRoomCentreHalfSize);
-    bool insideConnector =
-        IsInsideTrigger(playerPosition, connectorTrigger, connectorHalfSize);
-
-    bool insideAnyTrigger = insideCentre || insideConnector;
-    static bool wasInsideAnyTrigger = false;
-    static int debugFrameCounter = 0;
-
-    debugFrameCounter++;
-    if (debugFrameCounter >= 120)
+    if (!insideActiveZone)
     {
-        std::ostringstream stream;
-        stream
-            << "[Room3 Debug] Pos("
-            << playerPosition.x << ", "
-            << playerPosition.y << ", "
-            << playerPosition.z << ") "
-            << "State=" << ToRoom3StateString(mRoom3State) << " "
-            << "CanTrigger=" << (mRoom3CanTrigger ? "true" : "false") << " "
-            << "InsideCentre=" << (insideCentre ? "true" : "false") << " "
-            << "InsideConnector=" << (insideConnector ? "true" : "false")
-            << "\n";
-        Room3DebugLog(stream.str());
-        debugFrameCounter = 0;
+        mRoom3CanTrigger = true;
+        mRoom3LookAwayFrameCount = 0;
+        mRoom3LookAwayCooldownFrames = 0;
+        return;
     }
 
-    if (insideAnyTrigger != wasInsideAnyTrigger)
+    XMFLOAT3 activeDoorAnchor = XMFLOAT3(2.2f, 0.0f, 19.0f);
+
+    if (mRoom3State == Room3State::ShiftedA)
     {
-        std::ostringstream stream;
-        stream
-            << "[Room3 Debug] Trigger boundary crossed. "
-            << "insideAnyTrigger=" << (insideAnyTrigger ? "true" : "false") << " "
-            << "Pos(" << playerPosition.x << ", "
-            << playerPosition.y << ", "
-            << playerPosition.z << ")\n";
-        Room3DebugLog(stream.str());
-        wasInsideAnyTrigger = insideAnyTrigger;
+        activeDoorAnchor = XMFLOAT3(7.1f, 0.0f, 21.0f);
+    }
+    else if (mRoom3State == Room3State::ShiftedB)
+    {
+        activeDoorAnchor = XMFLOAT3(7.1f, 0.0f, 15.0f);
+    }
+
+    XMFLOAT3 forwardDirection = camera.GetForwardDirection();
+
+    float anchorX = activeDoorAnchor.x - playerPosition.x;
+    float anchorZ = activeDoorAnchor.z - playerPosition.z;
+    float anchorLength = sqrtf(anchorX * anchorX + anchorZ * anchorZ);
+
+    if (anchorLength <= 0.001f)
+    {
+        mRoom3LookAwayFrameCount = 0;
+        return;
+    }
+
+    float anchorDirectionX = anchorX / anchorLength;
+    float anchorDirectionZ = anchorZ / anchorLength;
+    float activeDoorDot =
+        forwardDirection.x * anchorDirectionX +
+        forwardDirection.z * anchorDirectionZ;
+
+    // Looking at the current open door arms the next toggle. Looking away from
+    // that same door for a short moment advances the cycle. This is much more
+    // repeatable than requiring the player to look away from every possible
+    // doorway anchor at once.
+    float lookAtDotThreshold = 0.35f;
+    float lookAwayDotThreshold = -0.05f;
+    int requiredLookAwayFrames = 18;
+    int cooldownFrames = 30;
+
+    bool isLookingAtActiveDoor = activeDoorDot > lookAtDotThreshold;
+    bool isLookingAwayFromActiveDoor = activeDoorDot < lookAwayDotThreshold;
+
+    if (mRoom3LookAwayCooldownFrames > 0)
+    {
+        mRoom3LookAwayCooldownFrames--;
+        mRoom3LookAwayFrameCount = 0;
+        return;
     }
 
     if (!mRoom3CanTrigger)
     {
-        if (!insideAnyTrigger)
+        if (isLookingAtActiveDoor)
         {
             mRoom3CanTrigger = true;
         }
 
+        mRoom3LookAwayFrameCount = 0;
         return;
     }
 
-    if (!insideAnyTrigger)
+    if (!isLookingAwayFromActiveDoor)
+    {
+        mRoom3LookAwayFrameCount = 0;
+        return;
+    }
+
+    mRoom3LookAwayFrameCount++;
+
+    if (mRoom3LookAwayFrameCount < requiredLookAwayFrames)
     {
         return;
     }
 
-    XMFLOAT3 shiftedPosition = playerPosition;
+    Room3State previousState = mRoom3State;
 
-    if (insideCentre)
+    if (mRoom3State == Room3State::Normal)
     {
-        if (mRoom3State == Room3State::Normal)
-        {
-            mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.6f;
-            shiftedPosition.z = 19.3f;
-        }
-        else if (mRoom3State == Room3State::ShiftedA)
-        {
-            mRoom3State = Room3State::ShiftedB;
-            shiftedPosition.x = 5.8f;
-            shiftedPosition.z = 18.4f;
-        }
-        else
-        {
-            mRoom3State = Room3State::Normal;
-            shiftedPosition.x = 7.1f;
-            shiftedPosition.z = 18.7f;
-        }
+        mRoom3State = Room3State::ShiftedA;
     }
-    else if (insideConnector)
+    else if (mRoom3State == Room3State::ShiftedA)
     {
-        // Connector zone swaps between shifted layouts.
-        if (mRoom3State == Room3State::ShiftedA)
-        {
-            mRoom3State = Room3State::ShiftedB;
-            shiftedPosition.x = 6.0f;
-            shiftedPosition.z = 17.5f;
-        }
-        else if (mRoom3State == Room3State::ShiftedB)
-        {
-            mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.3f;
-            shiftedPosition.z = 18.0f;
-        }
-        else
-        {
-            // First connector hit from normal state nudges into ShiftedA.
-            mRoom3State = Room3State::ShiftedA;
-            shiftedPosition.x = 8.0f;
-            shiftedPosition.z = 17.2f;
-        }
+        mRoom3State = Room3State::ShiftedB;
+    }
+    else
+    {
+        mRoom3State = Room3State::Normal;
     }
 
-    camera.SetPosition(shiftedPosition);
+    if (previousState == Room3State::ShiftedB &&
+        mRoom3State == Room3State::Normal &&
+        !mRoom3CollectibleUnlocked)
+    {
+        mRoom3CollectibleUnlocked = true;
+        mCollectibles[Room3CollectibleIndex].isSpawned = true;
+    }
+
     mRoom3CanTrigger = false;
+    mRoom3LookAwayFrameCount = 0;
+    mRoom3LookAwayCooldownFrames = cooldownFrames;
     ApplyRoom3Layout(mRoom3State);
 
     std::ostringstream stream;
     stream
-        << "[Room3 Debug] Transition fired. "
+        << "[Room3 Debug] Look-away transition fired. "
         << ToRoom3StateString(previousState) << " -> "
         << ToRoom3StateString(mRoom3State) << " "
-        << "NewPos(" << shiftedPosition.x << ", "
-        << shiftedPosition.y << ", "
-        << shiftedPosition.z << ")\n";
+        << "ActiveDoorDot=" << activeDoorDot << "\n";
     Room3DebugLog(stream.str());
 }
 
@@ -301,63 +342,72 @@ void Game::ApplyRoom3Layout(Room3State state)
 {
     mRoom3LayoutProps.clear();
 
-    // Two doorway lanes in validated right-room playable bounds.
-    // Doorway A = left lane, Doorway B = right lane.
-    XMFLOAT3 doorwayA = XMFLOAT3(5.9f, 0.0f, 18.6f);
-    XMFLOAT3 doorwayB = XMFLOAT3(8.9f, 0.0f, 18.6f);
+    // Room 3 now treats the corridor-room entrance as the door that melts
+    // and re-forms on different walls. The static level leaves real doorway
+    // gaps in each candidate wall; these dynamic slabs seal every inactive
+    // doorway, so the active state is an actual opening rather than a block
+    // stuck on top of a wall.
+    XMFLOAT3 originalCorridorDoor = XMFLOAT3(2.2f, 0.0f, 19.0f);
+    XMFLOAT3 backWallDoor = XMFLOAT3(7.1f, 0.0f, 15.0f);
+    XMFLOAT3 frontWallDoor = XMFLOAT3(7.1f, 0.0f, 21.0f);
 
     SceneObject centralPillar;
     centralPillar.position = XMFLOAT3(7.1f, 0.0f, 18.2f);
     centralPillar.scale = XMFLOAT3(0.45f, 1.8f, 0.45f);
     mRoom3LayoutProps.push_back(centralPillar);
 
-    SceneObject doorwayBlocker;
-    doorwayBlocker.scale = XMFLOAT3(0.55f, 1.4f, 0.55f);
-
     SceneObject sideBlock;
     sideBlock.scale = XMFLOAT3(0.9f, 1.0f, 0.4f);
 
-    // Visual doorway "wall cap" to make the active doorway appear to move.
-    // This is a tall thin panel that closes one lane while the other remains open.
-    SceneObject doorwayWallCap;
-    doorwayWallCap.scale = XMFLOAT3(0.35f, 1.8f, 0.25f);
+    SceneObject corridorDoorSlab;
+    corridorDoorSlab.position = originalCorridorDoor;
+    corridorDoorSlab.scale = XMFLOAT3(0.2f, 2.0f, 2.0f);
 
-    // Big visual "moving door wall" panel so the doorway appears to move
-    // between different room walls (front/back), not just side-to-side.
-    SceneObject movingDoorWall;
-    movingDoorWall.scale = XMFLOAT3(1.3f, 1.9f, 0.2f);
+    SceneObject backDoorSlab;
+    backDoorSlab.position = backWallDoor;
+    backDoorSlab.scale = XMFLOAT3(1.2f, 2.0f, 0.2f);
+
+    SceneObject frontDoorSlab;
+    frontDoorSlab.position = frontWallDoor;
+    frontDoorSlab.scale = XMFLOAT3(1.2f, 2.0f, 0.2f);
+
+    // A shallow floor-level puddle marks the doorway that has just melted.
+    // It sits below the player collision bounds, so it is purely visual.
+    SceneObject meltedDoorPuddle;
+    meltedDoorPuddle.scale = XMFLOAT3(1.0f, 0.05f, 0.55f);
 
     if (state == Room3State::Normal)
     {
-        // Neutral baseline: centre blocker, both doorway lanes still readable.
-        doorwayBlocker.position = XMFLOAT3(7.1f, 0.0f, 16.9f);
+        // Original layout: the corridor-to-room entrance remains exactly
+        // where the player first found it, with the other wall doors sealed.
         sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
-        doorwayWallCap.position = XMFLOAT3(7.1f, 0.0f, 18.6f);
-        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 20.8f);
+        meltedDoorPuddle.position = XMFLOAT3(2.55f, -0.9f, 19.0f);
+
+        mRoom3LayoutProps.push_back(backDoorSlab);
+        mRoom3LayoutProps.push_back(frontDoorSlab);
     }
     else if (state == Room3State::ShiftedA)
     {
-        // ShiftedA: block doorway B, keep doorway A open.
-        doorwayBlocker.position = doorwayB;
+        // ShiftedA: the original corridor doorway has re-formed as a real
+        // opening on the front wall, so the corridor and back wall are closed.
         sideBlock.position = XMFLOAT3(6.2f, 0.0f, 17.4f);
-        doorwayWallCap.position = doorwayB;
-        // Door looks moved to the front wall in this state.
-        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 20.8f);
+        meltedDoorPuddle.position = XMFLOAT3(7.1f, -0.9f, 20.65f);
+
+        mRoom3LayoutProps.push_back(corridorDoorSlab);
+        mRoom3LayoutProps.push_back(backDoorSlab);
     }
     else
     {
-        // ShiftedB: block doorway A, keep doorway B open.
-        doorwayBlocker.position = doorwayA;
+        // ShiftedB: the same door has melted into the back wall instead.
         sideBlock.position = XMFLOAT3(8.6f, 0.0f, 17.4f);
-        doorwayWallCap.position = doorwayA;
-        // Door looks moved to the back wall in this state.
-        movingDoorWall.position = XMFLOAT3(7.1f, 0.0f, 15.2f);
+        meltedDoorPuddle.position = XMFLOAT3(7.1f, -0.9f, 15.35f);
+
+        mRoom3LayoutProps.push_back(corridorDoorSlab);
+        mRoom3LayoutProps.push_back(frontDoorSlab);
     }
 
-    mRoom3LayoutProps.push_back(doorwayBlocker);
     mRoom3LayoutProps.push_back(sideBlock);
-    mRoom3LayoutProps.push_back(doorwayWallCap);
-    mRoom3LayoutProps.push_back(movingDoorWall);
+    mRoom3LayoutProps.push_back(meltedDoorPuddle);
 }
 
 void Game::UpdateCollectibles(Camera& camera)
