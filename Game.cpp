@@ -12,6 +12,9 @@ Game::Game()
 
     mRoom2CanTrigger = true;
 
+    mRoom3State = Room3State::Normal;
+    mRoom3CanTrigger = true;
+
     Collectible firstCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
     // Keep this away from room filler geometry to avoid hidden pickups.
@@ -38,6 +41,8 @@ void Game::Update(Camera& camera)
     CheckLoopingCorridor(camera);
 
     CheckRoom2Illusion(camera);
+
+    CheckRoom3Illusion(camera);
 
     ResolveCollision(camera);
 
@@ -121,6 +126,59 @@ void Game::CheckRoom2Illusion(Camera& camera)
         mRoom2CanTrigger = false;
         return;
     }
+}
+
+void Game::CheckRoom3Illusion(Camera& camera)
+{
+    XMFLOAT3 playerPosition = camera.GetPosition();
+
+    // Right room illusion zone around x≈7.1 and z≈18-28.
+    XMFLOAT3 rightRoomCentre = XMFLOAT3(7.1f, 0.0f, 23.0f);
+    XMFLOAT3 rightRoomHalfSize = XMFLOAT3(3.6f, 1.0f, 5.0f);
+
+    // Transition is allowed from either the center of room 3 or connector near z≈24.5.
+    XMFLOAT3 roomCentreTrigger = XMFLOAT3(7.1f, 0.0f, 23.0f);
+    XMFLOAT3 roomCentreHalfSize = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+    XMFLOAT3 connectorTrigger = XMFLOAT3(3.8f, 0.0f, 24.5f);
+    XMFLOAT3 connectorHalfSize = XMFLOAT3(1.1f, 1.0f, 1.2f);
+
+    bool isInRightRoom =
+        IsInsideTrigger(playerPosition, rightRoomCentre, rightRoomHalfSize);
+
+    bool insideTransitionTrigger =
+        IsInsideTrigger(playerPosition, roomCentreTrigger, roomCentreHalfSize) ||
+        IsInsideTrigger(playerPosition, connectorTrigger, connectorHalfSize);
+
+    if (!mRoom3CanTrigger)
+    {
+        if (!insideTransitionTrigger)
+        {
+            mRoom3CanTrigger = true;
+        }
+
+        return;
+    }
+
+    if (!isInRightRoom || !insideTransitionTrigger)
+    {
+        return;
+    }
+
+    if (mRoom3State == Room3State::Normal)
+    {
+        mRoom3State = Room3State::ShiftedA;
+    }
+    else if (mRoom3State == Room3State::ShiftedA)
+    {
+        mRoom3State = Room3State::ShiftedB;
+    }
+    else
+    {
+        mRoom3State = Room3State::Normal;
+    }
+
+    mRoom3CanTrigger = false;
 }
 
 void Game::UpdateCollectibles(Camera& camera)

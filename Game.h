@@ -14,6 +14,13 @@ struct Collectible
     bool isCollected;
 };
 
+enum class Room3State
+{
+    Normal,
+    ShiftedA,
+    ShiftedB
+};
+
 class Game
 {
 public:
@@ -33,6 +40,8 @@ private:
     void CheckLoopingCorridor(Camera& camera);
 
     void CheckRoom2Illusion(Camera& camera);
+
+    void CheckRoom3Illusion(Camera& camera);
 
     void UpdateCollectibles(Camera& camera);
 
@@ -57,4 +66,7 @@ private:
     bool mHasPreviousPlayerPosition;
 
     bool mRoom2CanTrigger;
+
+    Room3State mRoom3State;
+    bool mRoom3CanTrigger;
 };
