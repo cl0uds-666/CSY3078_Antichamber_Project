@@ -163,13 +163,16 @@ void Game::CheckRoom3Illusion(Camera& camera)
     XMFLOAT3 playerPosition = camera.GetPosition();
     Room3State previousState = mRoom3State;
 
-    // Right room bounds are around x ~= 7.1 and z ~= 18-28.
-    // We allow transitions only in a central zone and a connector zone.
-    XMFLOAT3 rightRoomCentreTrigger = XMFLOAT3(7.1f, 0.0f, 22.0f);
-    XMFLOAT3 rightRoomCentreHalfSize = XMFLOAT3(1.4f, 1.0f, 1.5f);
+    // Tuned to observed playable right-room area from debug traces:
+    // approximately x in [5.5, 10.8], z in [15.5, 20.0].
+    // We allow transitions in:
+    //  - a central room zone
+    //  - a connector/front zone near room entrance.
+    XMFLOAT3 rightRoomCentreTrigger = XMFLOAT3(7.1f, 0.0f, 18.7f);
+    XMFLOAT3 rightRoomCentreHalfSize = XMFLOAT3(1.8f, 1.0f, 1.2f);
 
-    XMFLOAT3 connectorTrigger = XMFLOAT3(7.1f, 0.0f, 24.5f);
-    XMFLOAT3 connectorHalfSize = XMFLOAT3(1.2f, 1.0f, 1.0f);
+    XMFLOAT3 connectorTrigger = XMFLOAT3(7.1f, 0.0f, 16.6f);
+    XMFLOAT3 connectorHalfSize = XMFLOAT3(1.6f, 1.0f, 1.0f);
 
     bool insideCentre =
         IsInsideTrigger(playerPosition, rightRoomCentreTrigger, rightRoomCentreHalfSize);
