@@ -317,27 +317,36 @@ void Game::ApplyRoom3Layout(Room3State state)
     SceneObject sideBlock;
     sideBlock.scale = XMFLOAT3(0.9f, 1.0f, 0.4f);
 
+    // Visual doorway "wall cap" to make the active doorway appear to move.
+    // This is a tall thin panel that closes one lane while the other remains open.
+    SceneObject doorwayWallCap;
+    doorwayWallCap.scale = XMFLOAT3(0.35f, 1.8f, 0.25f);
+
     if (state == Room3State::Normal)
     {
         // Neutral baseline: centre blocker, both doorway lanes still readable.
         doorwayBlocker.position = XMFLOAT3(7.1f, 0.0f, 16.9f);
         sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
+        doorwayWallCap.position = XMFLOAT3(7.1f, 0.0f, 18.6f);
     }
     else if (state == Room3State::ShiftedA)
     {
         // ShiftedA: block doorway B, keep doorway A open.
         doorwayBlocker.position = doorwayB;
         sideBlock.position = XMFLOAT3(6.2f, 0.0f, 17.4f);
+        doorwayWallCap.position = doorwayB;
     }
     else
     {
         // ShiftedB: block doorway A, keep doorway B open.
         doorwayBlocker.position = doorwayA;
         sideBlock.position = XMFLOAT3(8.6f, 0.0f, 17.4f);
+        doorwayWallCap.position = doorwayA;
     }
 
     mRoom3LayoutProps.push_back(doorwayBlocker);
     mRoom3LayoutProps.push_back(sideBlock);
+    mRoom3LayoutProps.push_back(doorwayWallCap);
 }
 
 void Game::UpdateCollectibles(Camera& camera)
