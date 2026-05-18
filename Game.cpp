@@ -11,6 +11,8 @@ Game::Game()
     mHasPreviousPlayerPosition = false;
 
     mRoom2CanTrigger = true;
+    mRoom3State = Room3State::Normal;
+    mRoom3CanTrigger = true;
 
     Collectible firstCollectible;
     // Spawn in the main corridor so it is clearly visible after unlock.
@@ -38,6 +40,7 @@ void Game::Update(Camera& camera)
     CheckLoopingCorridor(camera);
 
     CheckRoom2Illusion(camera);
+    CheckRoom3Illusion(camera);
 
     ResolveCollision(camera);
 
@@ -128,6 +131,91 @@ void Game::CheckRoom2Illusion(Camera& camera)
         mRoom2CanTrigger = false;
         return;
     }
+}
+
+void Game::CheckRoom3Illusion(Camera& camera)
+{
+    XMFLOAT3 playerPosition = camera.GetPosition();
+
+    // Right room bounds are around x ~= 7.1 and z ~= 18-28.
+    // We allow transitions only in a central zone and a connector zone.
+    XMFLOAT3 rightRoomCentreTrigger = XMFLOAT3(7.1f, 0.0f, 22.0f);
+    XMFLOAT3 rightRoomCentreHalfSize = XMFLOAT3(1.4f, 1.0f, 1.5f);
+
+    XMFLOAT3 connectorTrigger = XMFLOAT3(7.1f, 0.0f, 24.5f);
+    XMFLOAT3 connectorHalfSize = XMFLOAT3(1.2f, 1.0f, 1.0f);
+
+    bool insideCentre =
+        IsInsideTrigger(playerPosition, rightRoomCentreTrigger, rightRoomCentreHalfSize);
+    bool insideConnector =
+        IsInsideTrigger(playerPosition, connectorTrigger, connectorHalfSize);
+
+    bool insideAnyTrigger = insideCentre || insideConnector;
+
+    if (!mRoom3CanTrigger)
+    {
+        if (!insideAnyTrigger)
+        {
+            mRoom3CanTrigger = true;
+        }
+
+        return;
+    }
+
+    if (!insideAnyTrigger)
+    {
+        return;
+    }
+
+    XMFLOAT3 shiftedPosition = playerPosition;
+
+    if (insideCentre)
+    {
+        if (mRoom3State == Room3State::Normal)
+        {
+            mRoom3State = Room3State::ShiftedA;
+            shiftedPosition.x = 8.8f;
+            shiftedPosition.z = 21.0f;
+        }
+        else if (mRoom3State == Room3State::ShiftedA)
+        {
+            mRoom3State = Room3State::ShiftedB;
+            shiftedPosition.x = 5.6f;
+            shiftedPosition.z = 23.5f;
+        }
+        else
+        {
+            mRoom3State = Room3State::Normal;
+            shiftedPosition.x = 7.1f;
+            shiftedPosition.z = 22.0f;
+        }
+    }
+    else if (insideConnector)
+    {
+        // Connector zone swaps between shifted layouts.
+        if (mRoom3State == Room3State::ShiftedA)
+        {
+            mRoom3State = Room3State::ShiftedB;
+            shiftedPosition.x = 5.8f;
+            shiftedPosition.z = 25.5f;
+        }
+        else if (mRoom3State == Room3State::ShiftedB)
+        {
+            mRoom3State = Room3State::ShiftedA;
+            shiftedPosition.x = 8.4f;
+            shiftedPosition.z = 23.8f;
+        }
+        else
+        {
+            // First connector hit from normal state nudges into ShiftedA.
+            mRoom3State = Room3State::ShiftedA;
+            shiftedPosition.x = 8.2f;
+            shiftedPosition.z = 24.2f;
+        }
+    }
+
+    camera.SetPosition(shiftedPosition);
+    mRoom3CanTrigger = false;
 }
 
 void Game::UpdateCollectibles(Camera& camera)
