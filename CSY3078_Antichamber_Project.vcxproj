@@ -140,6 +140,10 @@
     <ClInclude Include="Level.h" />
     <ClInclude Include="Renderer.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\PixelShader.hlsl" />
+    <None Include="shaders\VertexShader.hlsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
