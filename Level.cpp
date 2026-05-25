@@ -229,6 +229,12 @@ void Level::AddRightIllusionRoom()
     AddBox(
         XMFLOAT3(7.1f, -1.0f, 24.5f),
         XMFLOAT3(3.0f, 0.2f, 3.5f));
+    AddBox(
+        XMFLOAT3(5.7f, 0.0f, 24.5f),
+        XMFLOAT3(0.2f, 2.0f, 3.5f));
+    AddBox(
+        XMFLOAT3(8.5f, 0.0f, 24.5f),
+        XMFLOAT3(0.2f, 2.0f, 3.5f));
 
     // Distinct far chamber beyond the extra room to ensure an unambiguous map size.
     // Explicit connector segment between extra room and far chamber.
