@@ -2,9 +2,278 @@
 
 #include <string>
 
+namespace
+{
+const char** GetGlyphRows(char character)
+{
+    static const char* blank[7] =
+    {
+        "00000",
+        "00000",
+        "00000",
+        "00000",
+        "00000",
+        "00000",
+        "00000"
+    };
+
+    static const char* a[7] =
+    {
+        "01110",
+        "10001",
+        "10001",
+        "11111",
+        "10001",
+        "10001",
+        "10001"
+    };
+
+    static const char* b[7] =
+    {
+        "11110",
+        "10001",
+        "10001",
+        "11110",
+        "10001",
+        "10001",
+        "11110"
+    };
+
+    static const char* c[7] =
+    {
+        "01111",
+        "10000",
+        "10000",
+        "10000",
+        "10000",
+        "10000",
+        "01111"
+    };
+
+    static const char* d[7] =
+    {
+        "11110",
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "11110"
+    };
+
+    static const char* e[7] =
+    {
+        "11111",
+        "10000",
+        "10000",
+        "11110",
+        "10000",
+        "10000",
+        "11111"
+    };
+
+    static const char* f[7] =
+    {
+        "11111",
+        "10000",
+        "10000",
+        "11110",
+        "10000",
+        "10000",
+        "10000"
+    };
+
+    static const char* h[7] =
+    {
+        "10001",
+        "10001",
+        "10001",
+        "11111",
+        "10001",
+        "10001",
+        "10001"
+    };
+
+    static const char* i[7] =
+    {
+        "11111",
+        "00100",
+        "00100",
+        "00100",
+        "00100",
+        "00100",
+        "11111"
+    };
+
+    static const char* k[7] =
+    {
+        "10001",
+        "10010",
+        "10100",
+        "11000",
+        "10100",
+        "10010",
+        "10001"
+    };
+
+    static const char* l[7] =
+    {
+        "10000",
+        "10000",
+        "10000",
+        "10000",
+        "10000",
+        "10000",
+        "11111"
+    };
+
+    static const char* m[7] =
+    {
+        "10001",
+        "11011",
+        "10101",
+        "10101",
+        "10001",
+        "10001",
+        "10001"
+    };
+
+    static const char* n[7] =
+    {
+        "10001",
+        "11001",
+        "10101",
+        "10011",
+        "10001",
+        "10001",
+        "10001"
+    };
+
+    static const char* o[7] =
+    {
+        "01110",
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "01110"
+    };
+
+    static const char* p[7] =
+    {
+        "11110",
+        "10001",
+        "10001",
+        "11110",
+        "10000",
+        "10000",
+        "10000"
+    };
+
+    static const char* r[7] =
+    {
+        "11110",
+        "10001",
+        "10001",
+        "11110",
+        "10100",
+        "10010",
+        "10001"
+    };
+
+    static const char* s[7] =
+    {
+        "01111",
+        "10000",
+        "10000",
+        "01110",
+        "00001",
+        "00001",
+        "11110"
+    };
+
+    static const char* t[7] =
+    {
+        "11111",
+        "00100",
+        "00100",
+        "00100",
+        "00100",
+        "00100",
+        "00100"
+    };
+
+    static const char* u[7] =
+    {
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "10001",
+        "01110"
+    };
+
+    static const char* w[7] =
+    {
+        "10001",
+        "10001",
+        "10001",
+        "10101",
+        "10101",
+        "10101",
+        "01010"
+    };
+
+    static const char* y[7] =
+    {
+        "10001",
+        "10001",
+        "01010",
+        "00100",
+        "00100",
+        "00100",
+        "00100"
+    };
+
+    if (character >= 'a' && character <= 'z')
+    {
+        character = static_cast<char>(character - 'a' + 'A');
+    }
+
+    switch (character)
+    {
+    case 'A': return a;
+    case 'B': return b;
+    case 'C': return c;
+    case 'D': return d;
+    case 'E': return e;
+    case 'F': return f;
+    case 'H': return h;
+    case 'I': return i;
+    case 'K': return k;
+    case 'L': return l;
+    case 'M': return m;
+    case 'N': return n;
+    case 'O': return o;
+    case 'P': return p;
+    case 'R': return r;
+    case 'S': return s;
+    case 'T': return t;
+    case 'U': return u;
+    case 'W': return w;
+    case 'Y': return y;
+    default: return blank;
+    }
+}
+}
+
 Renderer::Renderer()
 {
     mRotationAngle = 0.0f;
+    mScreenState = ScreenState::Start;
+    mWasMouseDown = false;
 }
 
 bool Renderer::Initialise(HWND hwnd)
@@ -527,6 +796,96 @@ void Renderer::DrawCube(
 }
 
 
+void Renderer::DrawHudGlyph(
+    char character,
+    float x,
+    float y,
+    float pixelSize,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    const char** glyphRows = GetGlyphRows(character);
+    float blockScale = pixelSize * 0.45f;
+
+    for (int row = 0; row < 7; row++)
+    {
+        for (int column = 0; column < 5; column++)
+        {
+            if (glyphRows[row][column] != '1')
+            {
+                continue;
+            }
+
+            DrawHudSegment(
+                x + column * pixelSize,
+                y - row * pixelSize,
+                blockScale,
+                blockScale,
+                0.0f,
+                view,
+                projection);
+        }
+    }
+}
+
+void Renderer::DrawHudText(
+    const char* text,
+    float centreX,
+    float centreY,
+    float pixelSize,
+    XMMATRIX view,
+    XMMATRIX projection)
+{
+    float textWidth = 0.0f;
+
+    for (int i = 0; text[i] != '\0'; i++)
+    {
+        if (text[i] == ' ')
+        {
+            textWidth += pixelSize * 3.0f;
+        }
+        else
+        {
+            textWidth += pixelSize * 6.0f;
+        }
+    }
+
+    float cursorX = centreX - textWidth * 0.5f + pixelSize * 0.5f;
+    float startY = centreY + pixelSize * 3.0f;
+
+    for (int i = 0; text[i] != '\0'; i++)
+    {
+        if (text[i] == ' ')
+        {
+            cursorX += pixelSize * 3.0f;
+            continue;
+        }
+
+        DrawHudGlyph(text[i], cursorX, startY, pixelSize, view, projection);
+        cursorX += pixelSize * 6.0f;
+    }
+}
+
+void Renderer::DrawScreenOverlay(
+    const char* title,
+    const char* subtitle)
+{
+    XMMATRIX hudView = XMMatrixIdentity();
+    XMMATRIX hudProjection = XMMatrixOrthographicLH(
+        1280.0f,
+        720.0f,
+        0.0f,
+        10.0f);
+
+    mDeviceContext->OMSetDepthStencilState(mHudDepthStencilState.Get(), 0);
+
+    DrawHudText(title, 0.0f, 75.0f, 16.0f, hudView, hudProjection);
+    DrawHudText(subtitle, 0.0f, -75.0f, 10.0f, hudView, hudProjection);
+
+    mDeviceContext->OMSetDepthStencilState(nullptr, 0);
+}
+
+
 
 void Renderer::DrawHudSegment(
     float x,
@@ -656,9 +1015,35 @@ void Renderer::RenderFrame()
         1.0f,
         0);
 
-    mCamera.Update();
+    bool isMouseDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+    bool wasClicked = isMouseDown && !mWasMouseDown;
+    mWasMouseDown = isMouseDown;
 
-    mGame.Update(mCamera);
+    if (mScreenState == ScreenState::Start)
+    {
+        if (wasClicked)
+        {
+            mScreenState = ScreenState::Playing;
+        }
+        else
+        {
+            DrawScreenOverlay("CLICK TO PLAY", "COLLECT THEM ALL");
+            mSwapChain->Present(1, 0);
+            return;
+        }
+    }
+
+    if (mScreenState == ScreenState::Playing)
+    {
+        mCamera.Update();
+
+        mGame.Update(mCamera);
+
+        if (mGame.GetCollectedCount() == static_cast<int>(mGame.GetCollectibles().size()))
+        {
+            mScreenState = ScreenState::End;
+        }
+    }
 
     // Update cube rotation
 
@@ -735,7 +1120,14 @@ void Renderer::RenderFrame()
         DrawCube(objectWorld, view, projection);
     }
 
-    DrawHudCounter();
+    if (mScreenState == ScreenState::End)
+    {
+        DrawScreenOverlay("ALL COLLECTED", "YOU FOUND THEM ALL");
+    }
+    else
+    {
+        DrawHudCounter();
+    }
 
     mSwapChain->Present(1, 0);
 }
