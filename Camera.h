@@ -23,6 +23,8 @@ public:
 
     void AddYaw(float deltaYaw);
 
+    bool IsFlightModeEnabled() const;
+
 private:
 
     XMFLOAT3 mPosition;
@@ -30,4 +32,8 @@ private:
     XMFLOAT3 mUp;
 
     float mYaw;
+    float mPitch;
+
+    bool mIsFlightMode;
+    bool mWasToggleKeyDown;
 };

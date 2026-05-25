@@ -7,12 +7,24 @@ Camera::Camera()
     mUp = XMFLOAT3(0.0f, 1.0f, 0.0f);
 
     mYaw = 0.0f;
+    mPitch = 0.0f;
+
+    mIsFlightMode = false;
+    mWasToggleKeyDown = false;
 }
 
 void Camera::Update()
 {
     float moveSpeed = 0.05f;
     float turnSpeed = 0.03f;
+    float pitchLimit = XM_PIDIV2 - 0.05f;
+
+    bool isToggleKeyDown = (GetAsyncKeyState('F') & 0x8000) != 0;
+    if (isToggleKeyDown && !mWasToggleKeyDown)
+    {
+        mIsFlightMode = !mIsFlightMode;
+    }
+    mWasToggleKeyDown = isToggleKeyDown;
 
     if (GetAsyncKeyState(VK_LEFT) & 0x8000)
     {
@@ -24,8 +36,37 @@ void Camera::Update()
         mYaw += turnSpeed;
     }
 
-    float forwardX = sinf(mYaw);
-    float forwardZ = cosf(mYaw);
+    if (mIsFlightMode)
+    {
+        if (GetAsyncKeyState(VK_UP) & 0x8000)
+        {
+            mPitch += turnSpeed;
+        }
+
+        if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+        {
+            mPitch -= turnSpeed;
+        }
+
+        if (mPitch > pitchLimit)
+        {
+            mPitch = pitchLimit;
+        }
+
+        if (mPitch < -pitchLimit)
+        {
+            mPitch = -pitchLimit;
+        }
+    }
+    else
+    {
+        mPitch = 0.0f;
+    }
+
+    float cosPitch = cosf(mPitch);
+    float forwardX = sinf(mYaw) * cosPitch;
+    float forwardY = sinf(mPitch);
+    float forwardZ = cosf(mYaw) * cosPitch;
 
     float rightX = cosf(mYaw);
     float rightZ = -sinf(mYaw);
@@ -33,12 +74,14 @@ void Camera::Update()
     if (GetAsyncKeyState('W') & 0x8000)
     {
         mPosition.x += forwardX * moveSpeed;
+        mPosition.y += forwardY * moveSpeed;
         mPosition.z += forwardZ * moveSpeed;
     }
 
     if (GetAsyncKeyState('S') & 0x8000)
     {
         mPosition.x -= forwardX * moveSpeed;
+        mPosition.y -= forwardY * moveSpeed;
         mPosition.z -= forwardZ * moveSpeed;
     }
 
@@ -55,7 +98,7 @@ void Camera::Update()
     }
 
     mTarget.x = mPosition.x + forwardX;
-    mTarget.y = mPosition.y;
+    mTarget.y = mPosition.y + forwardY;
     mTarget.z = mPosition.z + forwardZ;
 }
 
@@ -75,30 +118,37 @@ XMFLOAT3 Camera::GetPosition() const
 XMFLOAT3 Camera::GetForwardDirection() const
 {
     return XMFLOAT3(
-        sinf(mYaw),
-        0.0f,
-        cosf(mYaw));
+        sinf(mYaw) * cosf(mPitch),
+        sinf(mPitch),
+        cosf(mYaw) * cosf(mPitch));
 }
 
 void Camera::SetPosition(XMFLOAT3 position)
 {
     mPosition = position;
 
-    float forwardX = sinf(mYaw);
-    float forwardZ = cosf(mYaw);
+    float forwardX = sinf(mYaw) * cosf(mPitch);
+    float forwardY = sinf(mPitch);
+    float forwardZ = cosf(mYaw) * cosf(mPitch);
 
     mTarget.x = mPosition.x + forwardX;
-    mTarget.y = mPosition.y;
+    mTarget.y = mPosition.y + forwardY;
     mTarget.z = mPosition.z + forwardZ;
 }
 void Camera::AddYaw(float deltaYaw)
 {
     mYaw += deltaYaw;
 
-    float forwardX = sinf(mYaw);
-    float forwardZ = cosf(mYaw);
+    float forwardX = sinf(mYaw) * cosf(mPitch);
+    float forwardY = sinf(mPitch);
+    float forwardZ = cosf(mYaw) * cosf(mPitch);
 
     mTarget.x = mPosition.x + forwardX;
-    mTarget.y = mPosition.y;
+    mTarget.y = mPosition.y + forwardY;
     mTarget.z = mPosition.z + forwardZ;
+}
+
+bool Camera::IsFlightModeEnabled() const
+{
+    return mIsFlightMode;
 }
