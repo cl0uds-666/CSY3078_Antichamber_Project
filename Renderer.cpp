@@ -1,6 +1,8 @@
 #include "Renderer.h"
 
 #include <string>
+#include <iostream>
+#include <sstream>
 
 namespace
 {
@@ -490,89 +492,83 @@ bool Renderer::CreateHudDepthStencilState()
 
 bool Renderer::CreateShaders()
 {
-    std::string vertexShaderCode = R"(
+    const auto logShaderCompileError = [](const wchar_t* shaderPath, const char* shaderModel, HRESULT hr, ID3DBlob* errorBlob)
+    {
+        std::ostringstream message;
+        message << "Failed to compile shader ";
+        message << std::string(shaderModel);
+        message << " from path: ";
 
-cbuffer ConstantBuffer : register(b0)
-{
-    matrix wvp;
-};
+        if (shaderPath != nullptr)
+        {
+            std::wstring wPath(shaderPath);
+            message << std::string(wPath.begin(), wPath.end());
+        }
+        else
+        {
+            message << "<null>";
+        }
 
-struct vertexIn
-{
-    float3 position : POSITION;
-    float4 colour : COLOR;
-};
+        message << " (HRESULT=0x" << std::hex << static_cast<unsigned long>(hr) << std::dec << ")";
 
-struct vertexOut
-{
-    float4 position : SV_POSITION;
-    float4 colour : COLOR;
-};
+        if (errorBlob != nullptr && errorBlob->GetBufferPointer() != nullptr)
+        {
+            message << "\n";
+            message << static_cast<const char*>(errorBlob->GetBufferPointer());
+        }
 
-vertexOut main(vertexIn input)
-{
-    vertexOut output;
+        message << "\n";
 
-    output.position = mul(float4(input.position, 1.0f), wvp);
-    output.colour = input.colour;
-
-    return output;
-}
-
-)";
-
-    std::string pixelShaderCode = R"(
-
-struct pixelIn
-{
-    float4 position : SV_POSITION;
-    float4 colour : COLOR;
-};
-
-float4 main(pixelIn input) : SV_TARGET
-{
-    return input.colour;
-}
-
-)";
+        OutputDebugStringA(message.str().c_str());
+        std::cerr << message.str();
+    };
 
     ComPtr<ID3DBlob> vertexShaderBlob;
     ComPtr<ID3DBlob> pixelShaderBlob;
     ComPtr<ID3DBlob> errorBlob;
 
-    HRESULT hr = D3DCompile(
-        vertexShaderCode.c_str(),
-        vertexShaderCode.length(),
+    constexpr wchar_t kVertexShaderPath[] = L"shaders/VertexShader.hlsl";
+    constexpr wchar_t kPixelShaderPath[] = L"shaders/PixelShader.hlsl";
+
+    UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if defined(_DEBUG)
+    compileFlags |= D3DCOMPILE_DEBUG;
+    compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    HRESULT hr = D3DCompileFromFile(
+        kVertexShaderPath,
         nullptr,
-        nullptr,
-        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
         "main",
         "vs_5_0",
-        0,
+        compileFlags,
         0,
         vertexShaderBlob.GetAddressOf(),
         errorBlob.GetAddressOf());
 
     if (FAILED(hr))
     {
+        logShaderCompileError(kVertexShaderPath, "vs_5_0", hr, errorBlob.Get());
         return false;
     }
 
-    hr = D3DCompile(
-        pixelShaderCode.c_str(),
-        pixelShaderCode.length(),
+    errorBlob.Reset();
+
+    hr = D3DCompileFromFile(
+        kPixelShaderPath,
         nullptr,
-        nullptr,
-        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
         "main",
         "ps_5_0",
-        0,
+        compileFlags,
         0,
         pixelShaderBlob.GetAddressOf(),
         errorBlob.GetAddressOf());
 
     if (FAILED(hr))
     {
+        logShaderCompileError(kPixelShaderPath, "ps_5_0", hr, errorBlob.Get());
         return false;
     }
 
