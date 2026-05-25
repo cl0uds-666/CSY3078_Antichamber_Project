@@ -18,6 +18,10 @@ struct Vertex
     float y;
     float z;
 
+    float nx;
+    float ny;
+    float nz;
+
     float r;
     float g;
     float b;
@@ -27,6 +31,13 @@ struct Vertex
 struct ConstantBuffer
 {
     XMMATRIX wvp;
+    XMMATRIX world;
+    XMFLOAT3 lightDirection;
+    float padding0;
+    XMFLOAT3 lightColor;
+    float padding1;
+    XMFLOAT3 ambientColor;
+    float padding2;
 };
 
 enum class ScreenState

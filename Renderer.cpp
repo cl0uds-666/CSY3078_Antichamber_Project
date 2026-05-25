@@ -610,6 +610,15 @@ bool Renderer::CreateShaders()
             0,
             DXGI_FORMAT_R32G32B32A32_FLOAT,
             0,
+            24,
+            D3D11_INPUT_PER_VERTEX_DATA,
+            0
+        },
+        {
+            "NORMAL",
+            0,
+            DXGI_FORMAT_R32G32B32_FLOAT,
+            0,
             12,
             D3D11_INPUT_PER_VERTEX_DATA,
             0
@@ -618,7 +627,7 @@ bool Renderer::CreateShaders()
 
     hr = mDevice->CreateInputLayout(
         layout,
-        2,
+        3,
         vertexShaderBlob->GetBufferPointer(),
         vertexShaderBlob->GetBufferSize(),
         mInputLayout.GetAddressOf());
@@ -635,42 +644,51 @@ bool Renderer::CreateCube()
 {
     Vertex vertices[] =
     {
-        { -0.8f, -0.8f, -0.8f,  1.0f, 0.0f, 0.0f, 1.0f },
-        { -0.8f,  0.8f, -0.8f,  1.0f, 0.0f, 0.0f, 1.0f },
-        {  0.8f,  0.8f, -0.8f,  1.0f, 0.0f, 0.0f, 1.0f },
-        {  0.8f, -0.8f, -0.8f,  1.0f, 0.0f, 0.0f, 1.0f },
+        { -0.8f, -0.8f, -0.8f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+        { -0.8f,  0.8f, -0.8f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+        {  0.8f,  0.8f, -0.8f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+        {  0.8f, -0.8f, -0.8f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
 
-        { -0.8f, -0.8f,  0.8f,  0.0f, 1.0f, 0.0f, 1.0f },
-        {  0.8f, -0.8f,  0.8f,  0.0f, 1.0f, 0.0f, 1.0f },
-        {  0.8f,  0.8f,  0.8f,  0.0f, 1.0f, 0.0f, 1.0f },
-        { -0.8f,  0.8f,  0.8f,  0.0f, 1.0f, 0.0f, 1.0f }
+        { -0.8f, -0.8f,  0.8f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+        {  0.8f, -0.8f,  0.8f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+        {  0.8f,  0.8f,  0.8f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+        { -0.8f,  0.8f,  0.8f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+
+        { -0.8f,  0.8f, -0.8f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
+        { -0.8f,  0.8f,  0.8f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
+        {  0.8f,  0.8f,  0.8f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
+        {  0.8f,  0.8f, -0.8f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
+
+        { -0.8f, -0.8f, -0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, 0.0f, 1.0f },
+        {  0.8f, -0.8f, -0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, 0.0f, 1.0f },
+        {  0.8f, -0.8f,  0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, 0.0f, 1.0f },
+        { -0.8f, -0.8f,  0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, 0.0f, 1.0f },
+
+        { -0.8f, -0.8f, -0.8f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        { -0.8f, -0.8f,  0.8f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        { -0.8f,  0.8f,  0.8f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        { -0.8f,  0.8f, -0.8f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+
+        {  0.8f, -0.8f, -0.8f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f },
+        {  0.8f,  0.8f, -0.8f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f },
+        {  0.8f,  0.8f,  0.8f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f },
+        {  0.8f, -0.8f,  0.8f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f }
     };
 
     unsigned int indices[] =
     {
-        0, 1, 2,
-        0, 2, 3,
-
-        4, 6, 5,
-        4, 7, 6,
-
-        1, 7, 6,
-        1, 6, 2,
-
-        0, 3, 5,
-        0, 5, 4,
-
-        0, 4, 7,
-        0, 7, 1,
-
-        3, 2, 6,
-        3, 6, 5
+        0, 1, 2, 0, 2, 3,
+        4, 6, 5, 4, 7, 6,
+        8, 9, 10, 8, 10, 11,
+        12, 14, 13, 12, 15, 14,
+        16, 17, 18, 16, 18, 19,
+        20, 21, 22, 20, 22, 23
     };
 
     D3D11_BUFFER_DESC vertexBufferDesc = {};
 
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    vertexBufferDesc.ByteWidth = sizeof(Vertex) * 8;
+    vertexBufferDesc.ByteWidth = sizeof(Vertex) * 24;
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vertexBufferDesc.CPUAccessFlags = 0;
 
@@ -744,6 +762,13 @@ void Renderer::DrawCube(
     ConstantBuffer cb;
 
     cb.wvp = XMMatrixTranspose(wvp);
+    cb.world = XMMatrixTranspose(world);
+    cb.lightDirection = XMFLOAT3(-0.4f, -1.0f, -0.2f);
+    cb.padding0 = 0.0f;
+    cb.lightColor = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    cb.padding1 = 0.0f;
+    cb.ambientColor = XMFLOAT3(0.2f, 0.2f, 0.25f);
+    cb.padding2 = 0.0f;
 
     mDeviceContext->UpdateSubresource(
         mConstantBuffer.Get(),
@@ -787,6 +812,11 @@ void Renderer::DrawCube(
         mPixelShader.Get(),
         nullptr,
         0);
+
+    mDeviceContext->PSSetConstantBuffers(
+        0,
+        1,
+        mConstantBuffer.GetAddressOf());
 
     mDeviceContext->DrawIndexed(36, 0, 0);
 }
