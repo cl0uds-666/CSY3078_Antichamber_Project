@@ -91,10 +91,13 @@ void Level::AddLeftIllusionRoom()
         XMFLOAT3(roomCentreX, -1.0f, roomCentreZ),
         XMFLOAT3(6.2f, 0.2f, 3.8f));
 
-    // Outer left wall
+    // Outer left wall with a doorway to the connector into the extra side chamber.
     AddBox(
-        XMFLOAT3(-12.0f, 0.0f, roomCentreZ),
-        XMFLOAT3(0.2f, 2.0f, 3.8f));
+        XMFLOAT3(-12.0f, 0.0f, roomCentreZ - 2.4f),
+        XMFLOAT3(0.2f, 2.0f, 1.4f));
+    AddBox(
+        XMFLOAT3(-12.0f, 0.0f, roomCentreZ + 2.4f),
+        XMFLOAT3(0.2f, 2.0f, 1.4f));
 
     // Back wall with a centred doorway (fake exit A)
     AddBox(
