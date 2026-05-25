@@ -220,24 +220,20 @@ void Level::AddRightIllusionRoom()
         XMFLOAT3(10.15f, 0.0f, roomFrontZ),
         XMFLOAT3(1.85f, 2.0f, 0.2f));
 
-    // Extra back room for the two-entrance illusion later
     AddBox(
         XMFLOAT3(7.1f, -1.0f, 28.0f),
         XMFLOAT3(6.2f, 0.2f, 3.8f));
 
-    // Connector from right room to extra room
     AddBox(
         XMFLOAT3(7.1f, -1.0f, 24.5f),
         XMFLOAT3(3.0f, 0.2f, 3.5f));
     AddBox(
-        XMFLOAT3(5.7f, 0.0f, 24.5f),
-        XMFLOAT3(0.2f, 2.0f, 7.5f));
+        XMFLOAT3(5.7f, 0.0f, 26.5f),
+        XMFLOAT3(0.2f, 2.0f, 6.0f));
     AddBox(
-        XMFLOAT3(8.5f, 0.0f, 24.5f),
-        XMFLOAT3(0.2f, 2.0f, 7.5f));
+        XMFLOAT3(8.5f, 0.0f, 26.5f),
+        XMFLOAT3(0.2f, 2.0f, 6.0f));
 
-    // Distinct far chamber beyond the extra room to ensure an unambiguous map size.
-    // Explicit connector segment between extra room and far chamber.
     AddBox(
         XMFLOAT3(7.1f, -1.0f, 31.8f),
         XMFLOAT3(2.6f, 0.2f, 2.0f));
@@ -248,7 +244,6 @@ void Level::AddRightIllusionRoom()
         XMFLOAT3(8.3f, 0.0f, 31.8f),
         XMFLOAT3(0.2f, 2.0f, 2.0f));
 
-    // New far chamber (separate, clearly distinct room volume).
     AddBox(
         XMFLOAT3(7.1f, -1.0f, 36.2f),
         XMFLOAT3(5.2f, 0.2f, 3.2f));
