@@ -153,9 +153,13 @@ void Level::AddLeftIllusionRoom()
     AddBox(
         XMFLOAT3(-21.2f, 0.0f, roomCentreZ),
         XMFLOAT3(0.2f, 2.0f, 3.2f));
+    // Inner chamber wall with a doorway aligned to the connector so it is accessible.
     AddBox(
-        XMFLOAT3(-14.0f, 0.0f, roomCentreZ),
-        XMFLOAT3(0.2f, 2.0f, 3.2f));
+        XMFLOAT3(-14.0f, 0.0f, roomCentreZ - 2.0f),
+        XMFLOAT3(0.2f, 2.0f, 1.2f));
+    AddBox(
+        XMFLOAT3(-14.0f, 0.0f, roomCentreZ + 2.0f),
+        XMFLOAT3(0.2f, 2.0f, 1.2f));
     AddBox(
         XMFLOAT3(-17.6f, 0.0f, roomCentreZ - 3.0f),
         XMFLOAT3(3.8f, 2.0f, 0.2f));
