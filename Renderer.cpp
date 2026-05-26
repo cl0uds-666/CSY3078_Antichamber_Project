@@ -1011,7 +1011,7 @@ void Renderer::DrawHudCounter()
 
     mDeviceContext->OMSetDepthStencilState(mHudDepthStencilState.Get(), 0);
 
-    // Top-left HUD counter: collected / total.
+    // Quick progress readout in top-left.
     DrawHudDigit(collectedCount, -575.0f, 315.0f, hudView, hudProjection);
     DrawHudSegment(-535.0f, 315.0f, 3.0f, 22.0f, -0.45f, hudView, hudProjection);
     DrawHudDigit(totalCollectibles, -495.0f, 315.0f, hudView, hudProjection);
@@ -1023,18 +1023,18 @@ void Renderer::RenderFrame()
 {
     float colour[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    // Set the render target and depth buffer
+    // Bind frame buffers before drawing.
     mDeviceContext->OMSetRenderTargets(
         1,
         mRenderTargetView.GetAddressOf(),
         mDepthStencilView.Get());
 
-    // Clear the screen every frame
+    // Fresh color pass each frame.
     mDeviceContext->ClearRenderTargetView(
         mRenderTargetView.Get(),
         colour);
 
-    // Clear the depth buffer every frame
+    // Reset depth so this frame starts clean.
     mDeviceContext->ClearDepthStencilView(
         mDepthStencilView.Get(),
         D3D11_CLEAR_DEPTH,
@@ -1071,14 +1071,6 @@ void Renderer::RenderFrame()
         }
     }
 
-    // Update cube rotation
-
-   // mRotationAngle += 0.01f;
-
-   // XMMATRIX world =
-      //  XMMatrixRotationY(mRotationAngle) *
-		//XMMatrixRotationX(mRotationAngle * 0.5f); 
-    
     XMMATRIX view = mCamera.GetViewMatrix();
 
     XMMATRIX projection = XMMatrixPerspectiveFovLH(

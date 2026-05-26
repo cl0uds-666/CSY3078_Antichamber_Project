@@ -50,21 +50,19 @@ Game::Game()
     ApplyRoom3Layout(mRoom3State);
 
     Collectible corridorLoopCollectible;
-    // Spawn in the main corridor so it is clearly visible after unlock.
-    // Keep this away from room filler geometry to avoid hidden pickups.
+    // First pickup appears in plain sight after loop condition is met.
     corridorLoopCollectible.position = XMFLOAT3(0.0f, -0.2f, 17.2f);
     corridorLoopCollectible.isSpawned = false;
     corridorLoopCollectible.isCollected = false;
 
     Collectible leftRoomCollectible;
-    // This appears after using either left-room fake exit. Keep it away from
-    // the teleporter return point at z 10 so the player can notice it first.
+    // Second pickup sits near the left-room return route.
     leftRoomCollectible.position = XMFLOAT3(1.2f, -0.2f, 13.8f);
     leftRoomCollectible.isSpawned = false;
     leftRoomCollectible.isCollected = false;
 
     Collectible room3Collectible;
-    // Spawn just outside the looking room but before the corridor loop trigger.
+    // Final pickup sits between room 3 and the corridor loop trigger.
     room3Collectible.position = XMFLOAT3(-1.2f, -0.2f, 18.2f);
     room3Collectible.isSpawned = false;
     room3Collectible.isCollected = false;
@@ -118,9 +116,7 @@ void Game::CheckLoopingCorridor(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
-    // Only trigger the corridor loop when the player is still in the
-    // main corridor lane. This keeps the right-hand room free of
-    // teleportation behaviour.
+    // Keep corridor looping limited to the hallway lane.
     bool isInsideMainCorridor =
         playerPosition.x >= -2.0f &&
         playerPosition.x <= 2.0f;
@@ -130,13 +126,13 @@ void Game::CheckLoopingCorridor(Camera& camera)
     {
         mLoopCount++;
 
-        // Send player back to an earlier part of the same corridor
+        // Snap back to the early corridor segment.
         camera.SetPosition(XMFLOAT3(
             playerPosition.x,
             playerPosition.y,
             2.0f));
 
-        // After 3 loops, unlock the first collectible
+        // Third loop unlocks collectible #1.
         if (mLoopCount >= 3 && !mFirstCollectibleUnlocked)
         {
             mFirstCollectibleUnlocked = true;
@@ -149,8 +145,7 @@ void Game::CheckRoom2Illusion(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
-    // Two fake exit corridors inside the left room.
-    // Entering the room from corridor is fully normal (no entrance teleport).
+    // Left room has two fake exits; only exits teleport.
     XMFLOAT3 fakeExitACentre = XMFLOAT3(-9.0f, 0.0f, 6.0f);
     XMFLOAT3 fakeExitBCentre = XMFLOAT3(-9.0f, 0.0f, 14.0f);
     XMFLOAT3 exitHalfSize = XMFLOAT3(1.2f, 1.0f, 1.2f);
@@ -171,7 +166,7 @@ void Game::CheckRoom2Illusion(Camera& camera)
 
     if (IsInsideTrigger(playerPosition, fakeExitACentre, exitHalfSize))
     {
-        // Back-side fake exit: return to corridor and turn right (90 deg).
+        // Back fake exit returns player facing right.
         camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
         camera.AddYaw(-XM_PIDIV2);
 
@@ -187,7 +182,7 @@ void Game::CheckRoom2Illusion(Camera& camera)
 
     if (IsInsideTrigger(playerPosition, fakeExitBCentre, exitHalfSize))
     {
-        // Front-side fake exit: return to corridor and turn left (-90 deg).
+        // Front fake exit returns player facing left.
         camera.SetPosition(XMFLOAT3(-0.2f, 0.0f, 10.0f));
         camera.AddYaw(XM_PIDIV2);
 
@@ -211,8 +206,7 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
 {
     XMFLOAT3 playerPosition = camera.GetPosition();
 
-    // Cover the whole usable right-room space so the illusion can be driven
-    // from wherever the player happens to be standing in the room.
+    // Whole right room is an active zone for the look-away illusion.
     XMFLOAT3 activeZoneCentre = XMFLOAT3(7.1f, 0.0f, 18.0f);
     XMFLOAT3 activeZoneHalfSize = XMFLOAT3(4.5f, 1.0f, 2.6f);
 
@@ -258,10 +252,7 @@ void Game::CheckRoom3LookAwayToggle(Camera& camera)
         forwardDirection.x * anchorDirectionX +
         forwardDirection.z * anchorDirectionZ;
 
-    // Looking at the current open door arms the next toggle. Looking away from
-    // that same door for a short moment advances the cycle. This is much more
-    // repeatable than requiring the player to look away from every possible
-    // doorway anchor at once.
+    // Look at the active door to arm it, then look away to shift layout.
     float lookAtDotThreshold = 0.35f;
     float lookAwayDotThreshold = -0.05f;
     int requiredLookAwayFrames = 18;
@@ -342,11 +333,7 @@ void Game::ApplyRoom3Layout(Room3State state)
 {
     mRoom3LayoutProps.clear();
 
-    // Room 3 now treats the corridor-room entrance as the door that melts
-    // and re-forms on different walls. The static level leaves real doorway
-    // gaps in each candidate wall; these dynamic slabs seal every inactive
-    // doorway, so the active state is an actual opening rather than a block
-    // stuck on top of a wall.
+    // Dynamic slabs close inactive doorways so one doorway stays truly open.
     XMFLOAT3 originalCorridorDoor = XMFLOAT3(2.2f, 0.0f, 19.0f);
     XMFLOAT3 backWallDoor = XMFLOAT3(7.1f, 0.0f, 15.0f);
     XMFLOAT3 frontWallDoor = XMFLOAT3(7.1f, 0.0f, 21.0f);
@@ -371,15 +358,13 @@ void Game::ApplyRoom3Layout(Room3State state)
     frontDoorSlab.position = frontWallDoor;
     frontDoorSlab.scale = XMFLOAT3(1.2f, 2.0f, 0.2f);
 
-    // A shallow floor-level puddle marks the doorway that has just melted.
-    // It sits below the player collision bounds, so it is purely visual.
+    // Small puddle marks the wall where the doorway just moved from.
     SceneObject meltedDoorPuddle;
     meltedDoorPuddle.scale = XMFLOAT3(1.0f, 0.05f, 0.55f);
 
     if (state == Room3State::Normal)
     {
-        // Original layout: the corridor-to-room entrance remains exactly
-        // where the player first found it, with the other wall doors sealed.
+        // Default state: corridor door open, wall doors sealed.
         sideBlock.position = XMFLOAT3(9.8f, 0.0f, 19.2f);
         meltedDoorPuddle.position = XMFLOAT3(2.55f, -0.9f, 19.0f);
 
@@ -388,8 +373,7 @@ void Game::ApplyRoom3Layout(Room3State state)
     }
     else if (state == Room3State::ShiftedA)
     {
-        // ShiftedA: the original corridor doorway has re-formed as a real
-        // opening on the front wall, so the corridor and back wall are closed.
+        // ShiftedA: front wall door open.
         sideBlock.position = XMFLOAT3(6.2f, 0.0f, 17.4f);
         meltedDoorPuddle.position = XMFLOAT3(7.1f, -0.9f, 20.65f);
 
@@ -398,7 +382,7 @@ void Game::ApplyRoom3Layout(Room3State state)
     }
     else
     {
-        // ShiftedB: the same door has melted into the back wall instead.
+        // ShiftedB: back wall door open.
         sideBlock.position = XMFLOAT3(8.6f, 0.0f, 17.4f);
         meltedDoorPuddle.position = XMFLOAT3(7.1f, -0.9f, 15.35f);
 
