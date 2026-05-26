@@ -1,16 +1,15 @@
 #include <windows.h>
 #include "Renderer.h"
 
-// Global variables
+// Win32 app globals.
 HINSTANCE g_hInst;
 HWND g_hWnd;
 Renderer gRenderer;
 
-// Function declarations
+// Local Win32 helpers.
 BOOL CreateMainWnd(int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-// Main entry point
 int APIENTRY wWinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -20,10 +19,9 @@ int APIENTRY wWinMain(
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // Store instance handle
+    // Keep the instance handle around for CreateWindow.
     g_hInst = hInstance;
 
-    // Window class
     WNDCLASSEX wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
@@ -41,7 +39,6 @@ int APIENTRY wWinMain(
 
     RegisterClassEx(&wcex);
 
-    // Create the window
     if (!CreateMainWnd(nCmdShow))
     {
         return -1;
@@ -52,7 +49,7 @@ int APIENTRY wWinMain(
         return -1;
     }
 
-    // Message loop
+    // Basic game loop: pump messages, then render.
     MSG msg = { 0 };
 
     while (msg.message != WM_QUIT)
@@ -69,7 +66,6 @@ int APIENTRY wWinMain(
     return (int)msg.wParam;
 }
 
-// Create main window
 BOOL CreateMainWnd(int nCmdShow)
 {
     RECT rc = { 0, 0, 1280, 720 };
@@ -100,7 +96,6 @@ BOOL CreateMainWnd(int nCmdShow)
     return TRUE;
 }
 
-// Window procedure
 LRESULT CALLBACK WndProc(
     HWND hWnd,
     UINT message,

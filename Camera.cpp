@@ -24,6 +24,7 @@ void Camera::Update()
         mYaw += turnSpeed;
     }
 
+    // Build movement axes from yaw so WASD stays camera-relative.
     float forwardX = sinf(mYaw);
     float forwardZ = cosf(mYaw);
 
